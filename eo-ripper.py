@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 #*******************************************
-#APP: VerifyEmail-Social.py              ***
+#APP: EO-ripper.py                       ***
 #AUTHOR: Jorge Websec                    ***
 #TWITTER: @JorgeWebsec                   ***
 #Email: jorge@quantika14.com             ***
@@ -62,18 +62,17 @@ def check_linkedin(email, state):
 	br.submit()
 	respuestaLI = br.response().geturl()
 	if "captcha" in respuestaLI:
-		print "[INFO][LinkedIn][Captcha][>] Captcha detect!"
+		print "|--[INFO][LinkedIn][Captcha][>] Captcha detect!"
 	html = br.response().read()
-	print "[INFO][LinkedIn][URL][>] " + respuestaLI
+	print "|--[INFO][LinkedIn][URL][>] " + respuestaLI
 	soup = BeautifulSoup(html, "html.parser")
 	for span in soup.findAll("span", {"class", "error"}):
 		data = remove_tags(str(span))
 		data = data.split()
-		#if data.find("Hmm, that's not the right password. Please try again or request a new one.") > 0:
 		if "password" in data and state == 1:
 			print "|--[INFO][LinkedIn][CHECK][>] it's possible to hack it !!!"
 		else:
-			print "|--[INFO][LinkedIn][CHECK][>] The Account exists..."
+			print "|--[INFO][LinkedIn][CHECK][>] Account doesn't exist..."
 
 def check_wordpress(email, state):
 	r = br.open('http://wordpress.com/wp-login.php')
@@ -83,26 +82,39 @@ def check_wordpress(email, state):
 	br.submit()
 	respuestaWP = br.response().geturl()
 	html =  br.response().read()
-	if "Invalid" in html and state == 1:
+	if "password" in html and state == 1:
 		print "|--[INFO][WordPress][CHECK][>] it's possible to hack it !!!"
 	else:
-		print "|--[INFO][WordPress][CHECK][>] The Account exists..."
+		print "|--[INFO][WordPress][CHECK][>] Account doesn't exist..."
+
+def check_badoo(email, state):
+	r = br.open('https://badoo.com/es/signin/')
+	br.select_form(nr=0)
+	br.form["email"] = email
+	br.form["password"] = "123456123456"
+	br.submit()
+	respuestaWP = br.response().geturl()
+	html =  br.response().read()
+	if "Usuario" in html and state == 1:
+		print "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!"
+	else:
+		print "|--[INFO][Badoo][CHECK][>] Account doesn't exists..."
 
 def check_hesidohackeado(email):
 	url = "https://hesidohackeado.com/api?q=" + email
 	html = br.open(url).read()
 	data = json.loads(html)
-	print "[INFO][HESIDOHACKEADO][>] Results: " + str(data["results"])
+	print "|--[INFO][HESIDOHACKEADO][>] Results: " + str(data["results"])
 	for i in range(0,data["results"]):
-		print "[INFO][HESIDOHACKEADO][URL[>] " + str(data["data"][i]["source_url"])
+		print "|--[INFO][HESIDOHACKEADO][URL[>] " + str(data["data"][i]["source_url"])
 
 def check_pastebin(email):
 	url = "http://pastebin.com/search?q=" + email.replace(" ", "+")
-	print "[INFO][PASTEBIN][SEARCH][>] " + url + "..."
+	print "|--[INFO][PASTEBIN][SEARCH][>] " + url + "..."
 	html = br.open(url).read()
 	soup = BeautifulSoup(html, "html.parser")
 	for div in soup.findAll("div", {"class", "gsc-thumbnail-inside"}):
-		print "[INFO][PASTEBIN][URL][>]" + str(div)
+		print "|--[INFO][PASTEBIN][URL][>]" + str(div)
 
 def banner():
 	print """
@@ -147,9 +159,9 @@ def attack(email):
 	state = 0
 	for li in soup.find_all('li', {'class':"success valid"}):
 		verif = remove_tags(str(li))
-		#print verif
-		state = 1
-		if state == 1:
+		print verif
+		if len(verif)>5:
+			state = 1
 			print "[INFO][TARGET][>] " + email
 			print "|--[INFO][EMAIL][>] Email validated..."
 		else:
@@ -158,6 +170,7 @@ def attack(email):
 
 	check_linkedin(email, state)
 	check_wordpress(email, state)
+	check_badoo(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
 
