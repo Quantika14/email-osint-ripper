@@ -7,12 +7,13 @@
 #Email: jorge@quantika14.com             ***
 #*******************************************
 
-#Comprueba si un email existe.
-
 import random, re, string, urllib, urllib2, mechanize, cookielib, requests, json
 from urllib2 import urlopen
 from bs4 import BeautifulSoup
 from pygoogle import pygoogle
+
+#Global vars
+emails_list = "emails.txt"
 
 class colores:
     header = '\033[95m'
@@ -70,7 +71,7 @@ def check_linkedin(email, state):
 		data = remove_tags(str(span))
 		data = data.split()
 		if "password" in data and state == 1:
-			print "|--[INFO][LinkedIn][CHECK][>] it's possible to hack it !!!"
+			print colores.blue + "|--[INFO][LinkedIn][CHECK][>] it's possible to hack it !!!" + colores.normal
 		else:
 			print "|--[INFO][LinkedIn][CHECK][>] Account doesn't exist..."
 
@@ -83,7 +84,7 @@ def check_wordpress(email, state):
 	respuestaWP = br.response().geturl()
 	html =  br.response().read()
 	if "password" in html and state == 1:
-		print "|--[INFO][WordPress][CHECK][>] it's possible to hack it !!!"
+		print colores.blue + "|--[INFO][WordPress][CHECK][>] it's possible to hack it !!!" + colores.normal
 	else:
 		print "|--[INFO][WordPress][CHECK][>] Account doesn't exist..."
 
@@ -96,7 +97,7 @@ def check_badoo(email, state):
 	respuestaWP = br.response().geturl()
 	html =  br.response().read()
 	if "Usuario" in html and state == 1:
-		print "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!"
+		print colores.blue + "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!" + colores.normal
 	else:
 		print "|--[INFO][Badoo][CHECK][>] Account doesn't exists..."
 
@@ -145,7 +146,11 @@ def menu():
 	print "------------------------------------------------------------------------"
 	print ""
 	x = int(raw_input("Select 1/2: "))
-	return x
+	if type(x) != int:
+		print "[Warning][Menu][>] Error..."
+		menu()
+	else:
+		return x
 
 def attack(email):
 	email = email.replace("\n", "")
@@ -161,10 +166,10 @@ def attack(email):
 		verif = remove_tags(str(li))
 		print verif
 		if len(verif)>5:
-			state = 1
 			print "[INFO][TARGET][>] " + email
 			print "|--[INFO][EMAIL][>] Email validated..."
 		else:
+			state = 1
 			print "[INFO][TARGET][>] " + email
 			print "|--[INFO][EMAIL][>] It's not created..."
 
@@ -176,18 +181,18 @@ def attack(email):
 
 #Hilo Principal
 def main():
+	global emails_list
 	banner()
 	m = menu()
 	if m == 1:
-		file = "emails.txt"
-		f = open(file, "r")
-		emails = f.readlines()
-		for email in emails:
+		print "[INFO][Emails list][>] By default 'emails.txt'..."
+		print "[INFO][Emails list][>] If you want by default, press ENTER."
+		file = open(emails_list, 'r')
+		for email in file.readlines():
 			attack(email)
 	if m == 2:
 		email = str(raw_input("Email: "))
 		attack(email)
-
 
 if __name__ == "__main__":
 	main()
