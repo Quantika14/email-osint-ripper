@@ -138,7 +138,6 @@ def check_amazon(email, state):
 
 def check_tumblr(email, state):
 	r = br.open('https://www.tumblr.com/login')
-	print r.read()
 	br.select_form(nr=0)
 	br.form["determine_email"] = email
 	#br.form["pwd"] = "123456"
