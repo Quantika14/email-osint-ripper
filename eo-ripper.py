@@ -7,10 +7,8 @@
 #Email: jorge@quantika14.com             ***
 #*******************************************
 
-import random, re, string, urllib, urllib2, mechanize, cookielib, requests, json
-from urllib2 import urlopen
+import re, mechanize, cookielib, json
 from bs4 import BeautifulSoup
-from pygoogle import pygoogle
 
 emails_list = "emails.txt"
 
@@ -228,12 +226,11 @@ def attack(email):
 	check_linkedin(email, state)
 	check_wordpress(email, state)
 	check_badoo(email, state)
-	#check_amazon(email,state)
-	#check_tumblr(email, state)
+	check_amazon(email,state)
+	check_tumblr(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
 
-#Hilo Principal
 def main():
 	global emails_list
 	banner()
@@ -243,7 +240,7 @@ def main():
 		print "[INFO][Emails list][>] If you want by default, press ENTER."
 		file = open(emails_list, 'r')
 		for email in file.readlines():
-			attack(email)
+			attack(email.replace("\n", ""))
 	if m == 2:
 		email = str(raw_input("Email: "))
 		attack(email)
