@@ -126,7 +126,7 @@ def check_amazon(email, state):
 	soup = BeautifulSoup(html, "html.parser")
 	for div in soup.findAll("li"):
 		#div = remove_tags(str(div))
-		print div
+		#print div
 	if "correcta" in div:
 		print "|--[INFO][Amazon.es][CHECK][>] The account exist..."
 		if state == 1:
@@ -144,7 +144,7 @@ def check_tumblr(email, state):
 	#br.form["pwd"] = "123456"
 	br.submit()
 	respuestaURL = br.response().geturl()
-	print respuestaURL
+	#print respuestaURL
 	if "yahoo" in respuestaURL and state == 1:
 		print colores.blue + "|--[INFO][Tumblr][CHECK][>] it's possible to hack it !!!" + colores.normal
 	else:
