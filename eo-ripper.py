@@ -127,12 +127,12 @@ def check_amazon(email, state):
 	for div in soup.findAll("li"):
 		#div = remove_tags(str(div))
 		#print div
-	if "correcta" in div:
-		print "|--[INFO][Amazon.es][CHECK][>] The account exist..."
-		if state == 1:
-			print colores.blue + "|--[INFO][Amazon.es][CHECK][>] it's possible to hack it !!!" + colores.normal
-	if "Indica" in div:
-		print "|--[INFO][Amazon.es][CHECK][>] Account doesn't exists..."
+		if "correcta" in div:
+			print "|--[INFO][Amazon.es][CHECK][>] The account exist..."
+			if state == 1:
+				print colores.blue + "|--[INFO][Amazon.es][CHECK][>] it's possible to hack it !!!" + colores.normal
+		if "Indica" in div:
+			print "|--[INFO][Amazon.es][CHECK][>] Account doesn't exists..."
 	#except:
 	#	print colores.alert + "|--[WARNING][Amazon.es][>] Error..." + colores.normal
 
