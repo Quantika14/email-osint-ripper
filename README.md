@@ -7,6 +7,7 @@ EO-RIPPER.PY es una herramienta creada en Python 2.7 con el objetivo de realizar
 + re, json, cookielib
 + Mechanize - "pip install mechanize"
 + Bs4 - "pip install beautifulsoup4"
++ DuckDuckGO, Link: > https://github.com/thibauts/duckduckgo
 
 # Funcionalidades
 
