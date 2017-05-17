@@ -7,7 +7,7 @@
 #Email: jorge@quantika14.com             ***
 #*******************************************
 
-import re, mechanize, cookielib, json
+import re, mechanize, cookielib, json, duckduckgo
 from bs4 import BeautifulSoup
 
 emails_list = "emails.txt"
@@ -166,6 +166,14 @@ def check_pastebin(email):
 	for div in soup.findAll("div", {"class", "gsc-thumbnail-inside"}):
 		print "|--[INFO][PASTEBIN][URL][>]" + str(div)
 
+def check_duckduckgoInfo(email):
+	try:
+		links = duckduckgo.search(email, max_results=10)
+		for link in links:
+			print "|--[INFO][DuckDuckGO][SEARCH][>] " + str(link)
+	except:
+		print colores.alert + "|--[WARNING][DUCKDUCKGO][>] Error..." + colores.normal
+
 def banner():
 	print """
 ███████╗ ██████╗       ██████╗ ██╗██████╗ ██████╗ ███████╗██████╗    ██████╗ ██╗   ██╗
@@ -229,6 +237,7 @@ def attack(email):
 	check_tumblr(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
+	check_duckduckgoInfo(email)
 
 def main():
 	global emails_list
