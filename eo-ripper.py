@@ -174,6 +174,29 @@ def check_duckduckgoInfo(email):
 	except:
 		print colores.alert + "|--[WARNING][DUCKDUCKGO][>] Error..." + colores.normal
 
+def check_duckduckgoSmartInfo(email):
+	no_company = ("gmail"," hotmail"," yahoo"," protonmail"," mail")
+	split1 = email.split("@")
+	name = split1[0].replace("."," ")
+	split2 = split1[1].split(".")
+	company = split2[0].replace(".", "")
+	if company in no_company:
+		data = name
+	else:
+		data = name + " " + company
+	links = duckduckgo.search(data, max_results=10)
+	for link in links:
+		print "|--[INFO][DuckDuckGO][SMART SEARCH][>] " + str(link)
+		if "linkedin.com/in/" in str(link):
+			print colores.green + "|----[>][POSSIBLE LINKEDIN DETECT] ----" + colores.normal
+		if "twitter.com" in str(link):
+			print colores.green + "|----[>][POSSIBLE TWITTER DETECT] ----" + colores.normal
+		if "facebook.com" in str(link):
+			print colores.green + "|----[>][POSSIBLE FACEBOOK DETECT] ----" + colores.normal
+		if "soundcloud.com/" in str(link):
+			print colores.green + "|----[>][POSSIBLE SOUNDCLOUD DETECT] ----" + colores.normal
+
+
 def banner():
 	print """
 ███████╗ ██████╗       ██████╗ ██╗██████╗ ██████╗ ███████╗██████╗    ██████╗ ██╗   ██╗
@@ -238,6 +261,7 @@ def attack(email):
 	check_hesidohackeado(email)
 	check_pastebin(email)
 	check_duckduckgoInfo(email)
+	check_duckduckgoSmartInfo(email)
 
 def main():
 	global emails_list
