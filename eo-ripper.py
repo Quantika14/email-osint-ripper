@@ -23,6 +23,7 @@ class colores:
     underline = '\033[4m'
 
 br = mechanize.Browser()
+br_badoo = mechanize.Browser()
 cj = cookielib.LWPCookieJar() 
 br.set_cookiejar(cj) 
 br.set_handle_equiv( True ) 
@@ -101,13 +102,13 @@ def check_wordpress(email, state):
 
 def check_badoo(email, state):
 	try:
-		r = br.open('https://badoo.com/es/signin/')
-		br.select_form(nr=0)
-		br.form["email"] = email
-		br.form["password"] = "123456123456"
-		br.submit()
-		respuestaURL = br.response().geturl()
-		html =  br.response().read()
+		r = br_badoo.open('https://badoo.com/es/signin/')
+		br_badoo.select_form(nr=0)
+		br_badoo.form["email"] = email
+		br_badoo.form["password"] = "123456123456"
+		br_badoo.submit()
+		respuestaURL = br_badoo.response().geturl()
+		html =  br_badoo.response().read()
 		if "Usuario" in html and state == 1:
 			print colores.blue + "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!" + colores.normal
 		else:
