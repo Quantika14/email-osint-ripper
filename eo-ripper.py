@@ -7,8 +7,9 @@
 #Email: jorge@quantika14.com             ***
 #*******************************************
 
-import re, mechanize, cookielib, json, duckduckgo
+import re, mechanize, cookielib, json, duckduckgo, urllib2
 from bs4 import BeautifulSoup
+import lib.generateEmail
 
 emails_list = "emails.txt"
 
@@ -23,7 +24,6 @@ class colores:
     underline = '\033[4m'
 
 br = mechanize.Browser()
-br_badoo = mechanize.Browser()
 cj = cookielib.LWPCookieJar() 
 br.set_cookiejar(cj) 
 br.set_handle_equiv( True ) 
@@ -36,7 +36,12 @@ br.addheaders = [ ( 'User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.
 
 TAG_RE = re.compile(r'<[^>]+>')
 def remove_tags(text):
-    return TAG_RE.sub('', text)
+	return TAG_RE.sub('', text)
+
+def get_usernameEmail(email):
+	email = email.split("@")
+	username = email[0]
+	return username.replace(".","")
 
 def check_fb(email):
 	#FACEBOOK-----------------------------------------------------
@@ -102,13 +107,13 @@ def check_wordpress(email, state):
 
 def check_badoo(email, state):
 	try:
-		r = br_badoo.open('https://badoo.com/es/signin/')
-		br_badoo.select_form(nr=0)
-		br_badoo.form["email"] = email
-		br_badoo.form["password"] = "123456123456"
-		br_badoo.submit()
-		respuestaURL = br_badoo.response().geturl()
-		html =  br_badoo.response().read()
+		r = br.open('https://badoo.com/es/signin/')
+		br.select_form(nr=0)
+		br.form["email"] = email
+		br.form["password"] = "123456123456"
+		br.submit()
+		respuestaURL = br.response().geturl()
+		html =  br.response().read()
 		if "Usuario" in html and state == 1:
 			print colores.blue + "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!" + colores.normal
 		else:
@@ -197,6 +202,35 @@ def check_duckduckgoSmartInfo(email):
 		if "soundcloud.com/" in str(link):
 			print colores.green + "|----[>][POSSIBLE SOUNDCLOUD DETECT] ----" + colores.normal
 
+def check_AccountTwitter(email):
+	username = get_usernameEmail(email)
+	url = "https://twitter.com/" + username
+	html = urllib2.urlopen(url)
+	soup = BeautifulSoup(html, "html.parser")
+	for text in soup.findAll("h1"):
+		text = remove_tags(str(text))
+		if "Sorry" in text or "Lo sentimos," in text:
+			print "|--[INFO][Twitter][" + colores.blue+ username + colores.normal + "][>] Account doesn't exist..."
+		else:
+			print colores.green + "|--[INFO][Twitter][" + colores.blue+ username + colores.green + "][>] The account exist." + colores.normal
+
+# Email spoofing generator php
+def generate_php(fromm, title, messaje):
+	php = """<?php
+$from      = '""" + fromm + """';
+$titulo    = '""" + title + """';
+$mensaje   = '""" + messaje + """';
+$cabeceras = 'From: """ + fromm + """' . "\r\n" .
+    'Reply-To: nice@eo-ripper.py' . "\r\n" .
+    'X-Mailer: PHP/' . phpversion();
+
+mail($from, $titulo, $mensaje, $cabeceras);
+echo "Todo OK!";
+?>"""
+	f = open("evilmail.php", "a");
+	f.write(php)
+	f.close()
+	print "[|--[EO-RIPPER][SAY][>] the evilmail.php has been created!"
 
 def banner():
 	print """
@@ -224,9 +258,10 @@ def menu():
 	print "------------------------------------------------------------------------"
 	print "--- 1. Emails list (default: emails.txt)                             ---"
 	print "--- 2. Only one target                                               ---"
+	print "--- 3. Email spoofing generate                                       ---"
 	print "------------------------------------------------------------------------"
 	print ""
-	x = int(raw_input("Select 1/2: "))
+	x = int(raw_input("Select 1/2/3: "))
 	if type(x) != int:
 		print "[Warning][Menu][>] Error..."
 		menu()
@@ -261,6 +296,7 @@ def attack(email):
 	check_tumblr(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
+	check_AccountTwitter(email)
 	check_duckduckgoInfo(email)
 	check_duckduckgoSmartInfo(email)
 
@@ -277,6 +313,29 @@ def main():
 	if m == 2:
 		email = str(raw_input("Email: "))
 		attack(email)
+	if m == 3:
+		print "-----------------------------------------------------"
+		print "--               START EMAIL SPOOFING                "
+		print "-----------------------------------------------------"
+		print "INSTRUCTIONS: "
+		print "1. Generate evilmail.php"
+		print "2. Upload to hosting with email server"
+		print "3. Run the evilmail.php from the browser"
+		print "4. Enjoy!"
+		print "-----------------------------------------------------"
+		print " "
+
+		fromm = str(raw_input("From:"))
+		title = str(raw_input("Title: "))
+		messaje = str(raw_input("Messaje: "))
+		generate_php(fromm, title, messaje)
+
+	if m <0 or m > 3:
+		print "|--[EO-RIPPER][SAY][>] Are you stupid?"
+		print "|--[EO-RIPPER][SAY][>] 1 or 2 or 3."
+	if type(m) == str:
+		print "|--[EO-RIPPER][SAY][>] Are you stupid?"
+		print "|--[EO-RIPPER][SAY][>] 1 or 2 or 3."
 
 if __name__ == "__main__":
 	main()
