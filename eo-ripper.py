@@ -5,11 +5,11 @@
 #AUTHOR: Jorge Websec                    ***
 #TWITTER: @JorgeWebsec                   ***
 #Email: jorge@quantika14.com             ***
+#License: GNU v3                         ***
 #*******************************************
 
 import re, mechanize, cookielib, json, duckduckgo, urllib2
 from bs4 import BeautifulSoup
-import lib.generateEmail
 
 emails_list = "emails.txt"
 
@@ -176,7 +176,10 @@ def check_duckduckgoInfo(email):
 	try:
 		links = duckduckgo.search(email, max_results=10)
 		for link in links:
-			print "|--[INFO][DuckDuckGO][SEARCH][>] " + str(link)
+			if "delsexo.com" in str(link):
+				pass
+			else:
+				print "|--[INFO][DuckDuckGO][SEARCH][>] " + str(link)
 	except:
 		print colores.alert + "|--[WARNING][DUCKDUCKGO][>] Error..." + colores.normal
 
@@ -205,14 +208,17 @@ def check_duckduckgoSmartInfo(email):
 def check_AccountTwitter(email):
 	username = get_usernameEmail(email)
 	url = "https://twitter.com/" + username
-	html = urllib2.urlopen(url)
-	soup = BeautifulSoup(html, "html.parser")
-	for text in soup.findAll("h1"):
-		text = remove_tags(str(text))
-		if "Sorry" in text or "Lo sentimos," in text:
-			print "|--[INFO][Twitter][" + colores.blue+ username + colores.normal + "][>] Account doesn't exist..."
-		else:
-			print colores.green + "|--[INFO][Twitter][" + colores.blue+ username + colores.green + "][>] The account exist." + colores.normal
+	try:
+		html = urllib2.urlopen(url)
+		soup = BeautifulSoup(html, "html.parser")
+		for text in soup.findAll("h1"):
+			text = remove_tags(str(text))
+			if "Sorry" in text or "Lo sentimos," in text:
+				print "|--[INFO][Twitter][" + colores.blue+ username + colores.normal + "][>] Account doesn't exist..."
+			else:
+				print colores.green + "|--[INFO][Twitter][" + colores.blue+ username + colores.green + "][>] The account exist." + colores.normal
+	except urllib2.HTTPError:
+		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..."
 
 # Email spoofing generator php
 def generate_php(fromm, title, messaje):
@@ -249,7 +255,8 @@ def banner():
     - Hesidohackeado.com
     - Pastebin
 -------------------------------------------------------------------------------------
-Date latest version: 09/01/2017 | Version: 1.0
+Date version: 09/01/2017 | Version: 1.0
+Date latest version: 21/01/2017 | Version: 1.0.1
 -------------------------------------------------------------------------------------
 """
 
