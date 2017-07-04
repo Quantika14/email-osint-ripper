@@ -221,12 +221,12 @@ def check_AccountTwitter(email):
 		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..."
 
 # Email spoofing generator php
-def generate_php(fromm, title, messaje):
+def generate_php(fromm, to, title, messaje):
 	php = """<?php
 $from      = '""" + fromm + """';
 $titulo    = '""" + title + """';
 $mensaje   = '""" + messaje + """';
-$cabeceras = 'From: """ + fromm + """' . "\r\n" .
+$cabeceras = 'From: """ + to + """' . "\r\n" .
     'Reply-To: nice@eo-ripper.py' . "\r\n" .
     'X-Mailer: PHP/' . phpversion();
 
@@ -278,23 +278,27 @@ def menu():
 def attack(email):
 	email = email.replace("\n", "")
 	url = "http://www.verifyemailaddress.org/es/"
-	html = br.open(url)
-	br.select_form(nr=0)
-	br.form['email'] = email
-	br.submit()
-	resp = br.response().read()
-	soup = BeautifulSoup(resp, "html.parser")
-	state = 0
-	for li in soup.find_all('li', {'class':"success valid"}):
-		verif = remove_tags(str(li))
-		print verif
-		if len(verif)>5:
-			print "[INFO][TARGET][>] " + email
-			print "|--[INFO][EMAIL][>] Email validated..."
-		else:
-			state = 1
-			print "[INFO][TARGET][>] " + email
-			print "|--[INFO][EMAIL][>] It's not created..."
+	try:
+		html = br.open(url)
+		br.select_form(nr=0)
+		br.form['email'] = email
+		br.submit()
+		resp = br.response().read()
+		soup = BeautifulSoup(resp, "html.parser")
+		state = 0
+		for li in soup.find_all('li', {'class':"success valid"}):
+			verif = remove_tags(str(li))
+			print verif
+			if len(verif)>5:
+				print "[INFO][TARGET][>] " + email
+				print "|--[INFO][EMAIL][>] Email validated..."
+			else:
+				state = 1
+				print "[INFO][TARGET][>] " + email
+				print "|--[INFO][EMAIL][>] It's not created..."
+	except:
+		print "[INFO][TARGET][>] " + email
+		print "|--[INFO][EMAIL] No verification possible... "
 
 	check_linkedin(email, state)
 	check_wordpress(email, state)
@@ -333,9 +337,10 @@ def main():
 		print " "
 
 		fromm = str(raw_input("From:"))
+		to = str(raw_input("To: "))
 		title = str(raw_input("Title: "))
 		messaje = str(raw_input("Messaje: "))
-		generate_php(fromm, title, messaje)
+		generate_php(fromm, to, title, messaje)
 
 	if m <0 or m > 3:
 		print "|--[EO-RIPPER][SAY][>] Are you stupid?"
