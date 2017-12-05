@@ -84,6 +84,20 @@ def check_linkedin(email, state):
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
+def check_infojobs(email, state):
+	#INFOJOBS----------------------------------------------------
+	r = br.open("https://accounts.infojobs.net/security/accounts/recovery/index-responsive.xhtml?j_clientId=empleo_ij")
+	br.select_form(nr=0)
+	br.form["email"] = emails
+	br.submit()
+	respuestaIJOBS = br.response().geturl()
+	if "password-send" in respuestaIJOBS:
+		print "|--[INFO][INFOJOBS][CHECK] The account exist..."
+		if state == 1:
+			print colores.blue + "|--[INFO][INFOJOBS][CHECK][>] it's possible to hack it !!!" + colores.normal
+	else:
+		print "|--[INFO][INFOJOBS][CHECK][>] Account doesn't exist..."
+		
 def check_wordpress(email, state):
 	try:
 		r = br.open('http://wordpress.com/wp-login.php')
@@ -305,6 +319,7 @@ def attack(email):
 	check_badoo(email, state)
 	check_amazon(email,state)
 	check_tumblr(email, state)
+	check_infojobs(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
 	check_AccountTwitter(email)
