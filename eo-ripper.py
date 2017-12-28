@@ -57,6 +57,20 @@ def check_fb(email):
 	for img in soup.findAll("img"):
 		print img
 
+def check_infojobs(email, state):
+	#INFOJOBS----------------------------------------------------
+	r = br.open("https://accounts.infojobs.net/security/accounts/recovery/index-responsive.xhtml?j_clientId=empleo_ij")
+	br.select_form(nr=0)
+	br.form["email"] = email
+	br.click(type="submit", nr=0)
+	respuestaIJOBS = br.response().geturl()
+	if "password-send" in respuestaIJOBS:
+		print "|--[INFO][INFOJOBS][CHECK] The account exist..."
+		if state == 1:
+			print colores.blue + "|--[INFO][INFOJOBS][CHECK][>] it's possible to hack it !!!" + colores.normal
+	else:
+		print "|--[INFO][INFOJOBS][CHECK][>] Account doesn't exist..."
+
 def check_linkedin(email, state):
 	try:
 		#LINKEDIN-------------------------------------------------
@@ -84,20 +98,6 @@ def check_linkedin(email, state):
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
-def check_infojobs(email, state):
-	#INFOJOBS----------------------------------------------------
-	r = br.open("https://accounts.infojobs.net/security/accounts/recovery/index-responsive.xhtml?j_clientId=empleo_ij")
-	br.select_form(nr=0)
-	br.form["email"] = emails
-	br.submit()
-	respuestaIJOBS = br.response().geturl()
-	if "password-send" in respuestaIJOBS:
-		print "|--[INFO][INFOJOBS][CHECK] The account exist..."
-		if state == 1:
-			print colores.blue + "|--[INFO][INFOJOBS][CHECK][>] it's possible to hack it !!!" + colores.normal
-	else:
-		print "|--[INFO][INFOJOBS][CHECK][>] Account doesn't exist..."
-		
 def check_wordpress(email, state):
 	try:
 		r = br.open('http://wordpress.com/wp-login.php')
@@ -234,6 +234,24 @@ def check_AccountTwitter(email):
 	except urllib2.HTTPError:
 		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..."
 
+def check_netflix(email):
+	try:
+		r = br.open('https://www.netflix.com/es/login')
+		br.select_form(nr=0)
+		br.form["email"] = email
+		br.form["password"] = "123456"
+		br.submit()
+		respuestaURL = br.response().geturl()
+		html =  br.response().read()
+		soup = BeautifulSoup(html, "html.parser")
+		div = soup.find("div",{"class":"ui-message-contents"})
+		if "ninguna" in remove_tags(str(div)):
+			print "|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist..."
+		else:
+			print "|--[INFO][NETFLIX][ES][CHECK][>] The account exist..."
+	except:
+		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..."
+
 # Email spoofing generator php
 def generate_php(fromm, to, title, messaje):
 	php = """<?php
@@ -265,7 +283,7 @@ def banner():
 [!]What can I know with your email?
     - Only 1 email or emails list
     - Verify emails
-    - Verify LinkedIn, WordPress, Badoo, Amazon, Tumblr
+    - Verify LinkedIn, WordPress, Badoo, Amazon, Tumblr, Netflix Infojobs
     - Hesidohackeado.com
     - Pastebin
 -------------------------------------------------------------------------------------
@@ -316,13 +334,14 @@ def attack(email):
 
 	check_linkedin(email, state)
 	check_wordpress(email, state)
+	check_netflix(email)
 	check_badoo(email, state)
 	check_amazon(email,state)
 	check_tumblr(email, state)
-	check_infojobs(email, state)
 	check_hesidohackeado(email)
 	check_pastebin(email)
 	check_AccountTwitter(email)
+	#check_infojobs(email, state)
 	check_duckduckgoInfo(email)
 	check_duckduckgoSmartInfo(email)
 
