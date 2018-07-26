@@ -43,34 +43,6 @@ def get_usernameEmail(email):
 	username = email[0]
 	return username.replace(".","")
 
-def check_fb(email):
-	#FACEBOOK-----------------------------------------------------
-	r = br.open('https://www.facebook.com/login.php')
-	br.select_form(nr=0)
-	br.form["email"] = email
-	br.form["pass"] = "123412341234"
-	br.submit()
-	respuestaFB = br.response().geturl()
-	html = br.response().read()
-	print "[INFO][FB][URL] " + respuestaFB
-	soup = BeautifulSoup(html, "html.parser")
-	for img in soup.findAll("img"):
-		print img
-
-def check_infojobs(email, state):
-	#INFOJOBS----------------------------------------------------
-	r = br.open("https://accounts.infojobs.net/security/accounts/recovery/index-responsive.xhtml?j_clientId=empleo_ij")
-	br.select_form(nr=0)
-	br.form["email"] = email
-	br.click(type="submit", nr=0)
-	respuestaIJOBS = br.response().geturl()
-	if "password-send" in respuestaIJOBS:
-		print "|--[INFO][INFOJOBS][CHECK] The account exist..."
-		if state == 1:
-			print colores.blue + "|--[INFO][INFOJOBS][CHECK][>] it's possible to hack it !!!" + colores.normal
-	else:
-		print "|--[INFO][INFOJOBS][CHECK][>] Account doesn't exist..."
-
 def check_linkedin(email, state):
 	try:
 		#LINKEDIN-------------------------------------------------
@@ -119,43 +91,6 @@ def check_wordpress(email, state):
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
-def check_badoo(email, state):
-	try:
-		r = br.open('https://badoo.com/es/signin/')
-		br.select_form(nr=0)
-		br.form["email"] = email
-		br.form["password"] = "123456123456"
-		br.submit()
-		respuestaURL = br.response().geturl()
-		html =  br.response().read()
-		if "Usuario" in html and state == 1:
-			print colores.blue + "|--[INFO][Badoo][CHECK][>] it's possible to hack it !!!" + colores.normal
-		else:
-			print "|--[INFO][Badoo][CHECK][>] Account doesn't exists..."
-	except:
-		print colores.alert + "|--[WARNING][Badoo][>] Error..." + colores.normal
-
-def check_amazon(email, state):
-	r = br.open('https://www.amazon.es/ap/signin?_encoding=UTF8&openid.assoc_handle=esflex&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.mode=checkid_setup&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dnav_signin')
-	br.select_form("signIn")
-	br.form["email"] = email
-	br.form["password"] = "123456123456"
-	br.submit()
-	respuestaURL = br.response().geturl()
-	html =  br.response().read()
-	soup = BeautifulSoup(html, "html.parser")
-	for div in soup.findAll("li"):
-		#div = remove_tags(str(div))
-		#print div
-		if "correcta" in div:
-			print "|--[INFO][Amazon.es][CHECK][>] The account exist..."
-			if state == 1:
-				print colores.blue + "|--[INFO][Amazon.es][CHECK][>] it's possible to hack it !!!" + colores.normal
-		if "Indica" in div:
-			print "|--[INFO][Amazon.es][CHECK][>] Account doesn't exists..."
-	#except:
-	#	print colores.alert + "|--[WARNING][Amazon.es][>] Error..." + colores.normal
-
 def check_tumblr(email, state):
 	r = br.open('https://www.tumblr.com/login')
 	br.select_form(nr=0)
@@ -168,15 +103,6 @@ def check_tumblr(email, state):
 		print colores.blue + "|--[INFO][Tumblr][CHECK][>] it's possible to hack it !!!" + colores.normal
 	else:
 		print "|--[INFO][Tumblr][CHECK][>] Account doesn't exist..."
-
-def check_hesidohackeado(email):
-	url = "https://hesidohackeado.com/api?q=" + email
-	html = br.open(url).read()
-	data = json.loads(html)
-	print colores.green + "|--[INFO][HESIDOHACKEADO][>] " + colores.normal + "Results: " + str(data["results"])
-	for i in range(0,data["results"]):
-		print colores.green + "|--[INFO][HESIDOHACKEADO][URL][>] " + colores.normal +  str(data["data"][i]["source_url"])
-		print colores.green + "|--[INFO][HESIDOHACKEADO][DETAILS][>] " + colores.normal + str(data["data"][i]["details"])
 
 def check_pastebin(email):
 	url = "http://pastebin.com/search?q=" + email.replace(" ", "+")
@@ -283,12 +209,12 @@ def banner():
 [!]What can I know with your email?
     - Only 1 email or emails list
     - Verify emails
-    - Verify LinkedIn, WordPress, Badoo, Amazon, Tumblr, Netflix Infojobs
-    - Hesidohackeado.com
+    - Verify LinkedIn, WordPress, Tumblr, Netflix and DDG Hacking
     - Pastebin
 -------------------------------------------------------------------------------------
 Date version: 09/01/2017 | Version: 1.0
 Date latest version: 21/01/2017 | Version: 1.0.1
+Date latest version: 27/07/2018 | Version: 1.0.9
 -------------------------------------------------------------------------------------
 """
 
@@ -335,13 +261,9 @@ def attack(email):
 	check_linkedin(email, state)
 	check_wordpress(email, state)
 	check_netflix(email)
-	check_badoo(email, state)
-	check_amazon(email,state)
 	check_tumblr(email, state)
-	check_hesidohackeado(email)
 	check_pastebin(email)
 	check_AccountTwitter(email)
-	#check_infojobs(email, state)
 	check_duckduckgoInfo(email)
 	check_duckduckgoSmartInfo(email)
 
