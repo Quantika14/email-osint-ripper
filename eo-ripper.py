@@ -178,6 +178,30 @@ def check_netflix(email):
 	except:
 		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..."
 
+def check_amazon(email):
+	r = br.open('https://www.amazon.es/ap/signin?_encoding=UTF8&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fdeal%2FclaimDeal.html%3F_encoding%3DUTF8%26marketplaceID%3DA1RKKUPIHCS9HS%26dealID%3D14424ac4%26hmac%3DkvqwMiujZ5YmyR2LUbR40v0CTc0%253D%26asin%3DB01LZI6WP6%26dest%3D%252Fdp%252FB01LZI6WP6&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0')
+	br.select_form(nr=0)
+	br.form["email"] = email
+	br.form["password"] = "123456"
+	br.submit()
+	html = br.response().read()
+	soup = BeautifulSoup(html, "html.parser")
+	div = soup.find("div", {"class":"a-alert-content"})
+
+	if "ninguna cuenta" in remove_tags(str(div)):
+		print "|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist..."
+	else:
+		print "|--[INFO][AMAZON][ES][CHECK][>] The account exist..."
+
+def check_haveibeenpwned(email):
+	url = "https://haveibeenpwned.com/account/" + email
+	html = br.open(url)
+	soup = BeautifulSoup(html, "html.parser")
+	if soup.find("div", {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"}):
+		print "|--[INFO][HAVEIBEENPWNED][>] Your email appear in leaks..."
+	else:
+		print "|--[INFO][HAVEIBEENPWNED][>] Your email doesn't appear in leaks..."
+
 # Email spoofing generator php
 def generate_php(fromm, to, title, messaje):
 	php = """<?php
@@ -209,12 +233,13 @@ def banner():
 [!]What can I know with your email?
     - Only 1 email or emails list
     - Verify emails
-    - Verify LinkedIn, WordPress, Tumblr, Netflix and DDG Hacking
+    - Verify LinkedIn, WordPress, Amazon[ES], Tumblr, Netflix and DDG Hacking
     - Pastebin
 -------------------------------------------------------------------------------------
 Date version: 09/01/2017 | Version: 1.0
 Date latest version: 21/01/2017 | Version: 1.0.1
 Date latest version: 27/07/2018 | Version: 1.0.9
+Date latest version: 31/07/2018 | Version: 1.2.1
 -------------------------------------------------------------------------------------
 """
 
@@ -258,6 +283,7 @@ def attack(email):
 		print "[INFO][TARGET][>] " + email
 		print "|--[INFO][EMAIL] No verification possible... "
 
+	#CALL THE ACTION
 	check_linkedin(email, state)
 	check_wordpress(email, state)
 	check_netflix(email)
@@ -266,7 +292,8 @@ def attack(email):
 	check_AccountTwitter(email)
 	check_duckduckgoInfo(email)
 	check_duckduckgoSmartInfo(email)
-
+	check_amazon(email)
+	check_haveibeenpwned(email)
 def main():
 	global emails_list
 	banner()
