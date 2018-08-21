@@ -2,6 +2,11 @@
 
 EO-RIPPER.PY es una herramienta creada en Python 2.7 con el objetivo de realizar un OSINT a un email o lista de emails.
 
+# Vídeos
+[![Cómo hacer OSINT a un email](https://github.com/Quantika14/email-osint-ripper/blob/master/Images/banner1.jpg)](https://www.youtube.com/watch?v=Eo9_mJLBc2c&t=254s)
+
+[![Cómo saber una cuenta de Netflix](https://github.com/Quantika14/email-osint-ripper/blob/master/Images/banner2.jpg)](https://www.youtube.com/watch?v=0lJ6iD2x72o&t=144s)
+
 # Librerias
 
 + re, json, cookielib
@@ -10,11 +15,13 @@ EO-RIPPER.PY es una herramienta creada en Python 2.7 con el objetivo de realizar
 + DuckDuckGO, Link: > https://github.com/thibauts/duckduckgo
 
 **** INSTALL ****
+```
 $ pip install -r requeriments.txt
 $ git clone https://github.com/thibauts/duckduckgo
 $ cd duckduckgo-master
 $ python setup.py install
 Enjoy!
+```
 
 # Funcionalidades
 
