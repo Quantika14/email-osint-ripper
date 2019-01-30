@@ -8,8 +8,10 @@
 #License: GNU v3                         ***
 #*******************************************
 
-import re, mechanize, cookielib, json, duckduckgo, urllib2
+import re, mechanize, cookielib, json, duckduckgo, urllib2, requests
+import requests
 from bs4 import BeautifulSoup
+from validate_email import validate_email
 
 emails_list = "emails.txt"
 
@@ -43,7 +45,7 @@ def get_usernameEmail(email):
 	username = email[0]
 	return username.replace(".","")
 
-def check_linkedin(email, state):
+def check_linkedin(email):
 	try:
 		#LINKEDIN-------------------------------------------------
 		r = br.open('https://www.linkedin.com/')
@@ -63,14 +65,13 @@ def check_linkedin(email, state):
 			data = remove_tags(str(span))
 			if "password" in data:
 				print "|--[INFO][LinkedIn][CHECK][>] The account exist..."
-				if state == 1:
-					print colores.blue + "|--[INFO][LinkedIn][CHECK][>] it's possible to hack it !!!" + colores.normal
+
 			if "recognize" in data:
 				print "|--[INFO][LinkedIn][CHECK][>] The account doesn't exist..."
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
-def check_wordpress(email, state):
+def check_wordpress(email):
 	try:
 		r = br.open('http://wordpress.com/wp-login.php')
 		br.select_form("loginform")
@@ -84,14 +85,13 @@ def check_wordpress(email, state):
 		div = remove_tags(str(divError))
 		if "incorrect" in div:
 			print "|--[INFO][WordPress][CHECK][>] The account exist..."
-			if state == 1:
-				print colores.blue + "|--[INFO][WordPress][CHECK][>] it's possible to hack it !!!" + colores.normal
+
 		if "Invalid" in div:
 			print "|--[INFO][WordPress][CHECK][>] Account doesn't exist..."
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
-def check_tumblr(email, state):
+def check_tumblr(email):
 	r = br.open('https://www.tumblr.com/login')
 	br.select_form(nr=0)
 	br.form["determine_email"] = email
@@ -149,7 +149,7 @@ def check_AccountTwitter(email):
 	username = get_usernameEmail(email)
 	url = "https://twitter.com/" + username
 	try:
-		html = urllib2.urlopen(url)
+		html = requests.get(url).text
 		soup = BeautifulSoup(html, "html.parser")
 		for text in soup.findAll("h1"):
 			text = remove_tags(str(text))
@@ -158,7 +158,7 @@ def check_AccountTwitter(email):
 			else:
 				print colores.green + "|--[INFO][Twitter][" + colores.blue+ username + colores.green + "][>] The account exist." + colores.normal
 	except urllib2.HTTPError:
-		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..."
+		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..." + colores.normal
 
 def check_netflix(email):
 	try:
@@ -179,7 +179,7 @@ def check_netflix(email):
 		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..."
 
 def check_amazon(email):
-	r = br.open('https://www.amazon.es/ap/signin?_encoding=UTF8&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fdeal%2FclaimDeal.html%3F_encoding%3DUTF8%26marketplaceID%3DA1RKKUPIHCS9HS%26dealID%3D14424ac4%26hmac%3DkvqwMiujZ5YmyR2LUbR40v0CTc0%253D%26asin%3DB01LZI6WP6%26dest%3D%252Fdp%252FB01LZI6WP6&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0')
+	r = br.open('https://www.amazon.es/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.es%2F%3Fref_%3Dnav_ya_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&&openid.pape.max_auth_age=0')
 	br.select_form(nr=0)
 	br.form["email"] = email
 	br.form["password"] = "123456"
@@ -240,6 +240,7 @@ Date version: 09/01/2017 | Version: 1.0
 Date latest version: 21/01/2017 | Version: 1.0.1
 Date latest version: 27/07/2018 | Version: 1.0.9
 Date latest version: 31/07/2018 | Version: 1.2.1
+Date latest version: 30/01/2019 | Version: 1.2.3
 -------------------------------------------------------------------------------------
 """
 
@@ -260,40 +261,40 @@ def menu():
 
 def attack(email):
 	email = email.replace("\n", "")
-	url = "http://www.verifyemailaddress.org/es/"
-	try:
-		html = br.open(url)
-		br.select_form(nr=0)
-		br.form['email'] = email
-		br.submit()
-		resp = br.response().read()
-		soup = BeautifulSoup(resp, "html.parser")
-		state = 0
-		for li in soup.find_all('li', {'class':"success valid"}):
-			verif = remove_tags(str(li))
-			print verif
-			if len(verif)>5:
+
+	if re.match('^[(a-z0-9\_\-\.)]+@[(a-z0-9\_\-\.)]+\.[(a-z)]{2,15}$', email.lower()):
+		print "[INFO][TARGET][>] Hello, " + email + " is correct."
+		ok = True
+	else:
+		print "[INFO][TARGET][>] Hello, " + email + " doesn't a email. Try again!'"
+		ok = False
+		
+	if ok == True:
+		url = "http://www.verifyemailaddress.org/es/"
+		try:
+			is_valid = validate_email(email,verify=True)
+			if is_valid:
 				print "[INFO][TARGET][>] " + email
 				print "|--[INFO][EMAIL][>] Email validated..."
 			else:
-				state = 1
 				print "[INFO][TARGET][>] " + email
 				print "|--[INFO][EMAIL][>] It's not created..."
-	except:
-		print "[INFO][TARGET][>] " + email
-		print "|--[INFO][EMAIL] No verification possible... "
+		except:
+			print "[INFO][TARGET][>] " + email
+			print colores.alert + "|--[INFO][EMAIL] No verification possible... " + colores.normal
 
 	#CALL THE ACTION
-	check_linkedin(email, state)
-	check_wordpress(email, state)
+	check_linkedin(email)
+	check_wordpress(email)
 	check_netflix(email)
-	check_tumblr(email, state)
+	check_tumblr(email)
 	check_pastebin(email)
 	check_AccountTwitter(email)
 	check_duckduckgoInfo(email)
 	check_duckduckgoSmartInfo(email)
 	check_amazon(email)
 	check_haveibeenpwned(email)
+
 def main():
 	global emails_list
 	banner()
