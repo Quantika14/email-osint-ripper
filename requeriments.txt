@@ -2,3 +2,5 @@ beautifulsoup4
 mechanize
 cssselect
 cookielib
+validate_email
+pyDNS
