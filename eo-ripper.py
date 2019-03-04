@@ -8,7 +8,7 @@
 #License: GNU v3                         ***
 #*******************************************
 
-import re, mechanize, cookielib, json, duckduckgo, urllib2, requests
+import re, mechanize, json, duckduckgo, urllib2, requests
 import requests
 from bs4 import BeautifulSoup
 from validate_email import validate_email
@@ -26,8 +26,6 @@ class colores:
     underline = '\033[4m'
 
 br = mechanize.Browser()
-cj = cookielib.LWPCookieJar() 
-br.set_cookiejar(cj) 
 br.set_handle_equiv( True ) 
 br.set_handle_gzip( True ) 
 br.set_handle_redirect( True ) 
@@ -176,7 +174,7 @@ def check_netflix(email):
 		else:
 			print "|--[INFO][NETFLIX][ES][CHECK][>] The account exist..."
 	except:
-		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..."
+		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..." + colores.normal
 
 def check_amazon(email):
 	r = br.open('https://www.amazon.es/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.es%2F%3Fref_%3Dnav_ya_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&&openid.pape.max_auth_age=0')
