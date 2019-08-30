@@ -234,6 +234,7 @@ Date latest version: 21/01/2017 | Version: 1.0.1
 Date latest version: 27/07/2018 | Version: 1.0.9
 Date latest version: 31/07/2018 | Version: 1.2.1
 Date latest version: 30/01/2019 | Version: 1.2.3
+Date latest version: 30/08/2019 | Version: 1.3.0
 -------------------------------------------------------------------------------------
 """
 
