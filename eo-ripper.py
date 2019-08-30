@@ -43,32 +43,6 @@ def get_usernameEmail(email):
 	username = email[0]
 	return username.replace(".","")
 
-def check_linkedin(email):
-	try:
-		#LINKEDIN-------------------------------------------------
-		r = br.open('https://www.linkedin.com/')
-		br.select_form(nr=0)
-		br.form["session_key"] = email
-		br.form["session_password"] = "123456"
-		br.submit()
-		respuestaURL = br.response().geturl()
-		if "captcha" in respuestaURL:
-			print "|--[INFO][LinkedIn][Captcha][>] Captcha detect!"
-		else:
-			pass
-		html = br.response().read()
-		#print "|--[INFO][LinkedIn][URL][>] " + respuestaLI
-		soup = BeautifulSoup(html, "html.parser")
-		for span in soup.findAll("span", {"class", "error"}):
-			data = remove_tags(str(span))
-			if "password" in data:
-				print "|--[INFO][LinkedIn][CHECK][>] The account exist..."
-
-			if "recognize" in data:
-				print "|--[INFO][LinkedIn][CHECK][>] The account doesn't exist..."
-	except:
-		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
-
 def check_wordpress(email):
 	try:
 		r = br.open('http://wordpress.com/wp-login.php')
@@ -88,19 +62,6 @@ def check_wordpress(email):
 			print "|--[INFO][WordPress][CHECK][>] Account doesn't exist..."
 	except:
 		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
-
-def check_tumblr(email):
-	r = br.open('https://www.tumblr.com/login')
-	br.select_form(nr=0)
-	br.form["determine_email"] = email
-	#br.form["pwd"] = "123456"
-	br.submit()
-	respuestaURL = br.response().geturl()
-	#print respuestaURL
-	if "yahoo" in respuestaURL and state == 1:
-		print colores.blue + "|--[INFO][Tumblr][CHECK][>] it's possible to hack it !!!" + colores.normal
-	else:
-		print "|--[INFO][Tumblr][CHECK][>] Account doesn't exist..."
 
 def check_pastebin(email):
 	url = "http://pastebin.com/search?q=" + email.replace(" ", "+")
@@ -162,7 +123,7 @@ def check_netflix(email):
 	try:
 		r = br.open('https://www.netflix.com/es/login')
 		br.select_form(nr=0)
-		br.form["email"] = email
+		br.form["userLoginId"] = email
 		br.form["password"] = "123456"
 		br.submit()
 		respuestaURL = br.response().geturl()
@@ -177,16 +138,20 @@ def check_netflix(email):
 		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..." + colores.normal
 
 def check_amazon(email):
-	r = br.open('https://www.amazon.es/ap/signin?openid.return_to=https%3A%2F%2Fwww.amazon.es%2F%3Fref_%3Dnav_ya_signin&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&&openid.pape.max_auth_age=0')
+	r = br.open('https://www.amazon.es/ap/register?showRememberMe=true&openid.pape.max_auth_age=0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=esflex&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26action%3Dsign-out%26path%3D%252Fgp%252Fyourstore%252Fhome%26ref_%3Dnav_youraccount_signout%26signIn%3D1%26useRedirectOnSuccess%3D1&prevRID=8JDMFMXKWNZQKE8EYVTH&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&prepopulatedLoginId=&failedSignInCount=0&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ubid=259-8895990-3455759')
 	br.select_form(nr=0)
+	br.form["customerName"] = "Gustavo Becquer"
 	br.form["email"] = email
-	br.form["password"] = "123456"
+	br.form["password"] = "123456//eoripper"
+	br.form["passwordCheck"] = "123456//eoripper"
 	br.submit()
+
 	html = br.response().read()
+
 	soup = BeautifulSoup(html, "html.parser")
 	div = soup.find("div", {"class":"a-alert-content"})
 
-	if "ninguna cuenta" in remove_tags(str(div)):
+	if "ya existe una cuenta" in remove_tags(str(div)):
 		print "|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist..."
 	else:
 		print "|--[INFO][AMAZON][ES][CHECK][>] The account exist..."
@@ -199,6 +164,36 @@ def check_haveibeenpwned(email):
 		print "|--[INFO][HAVEIBEENPWNED][>] Your email appear in leaks..."
 	else:
 		print "|--[INFO][HAVEIBEENPWNED][>] Your email doesn't appear in leaks..."
+
+def check_emailrep(email):
+	url = "https://emailrep.io/" + email
+	JSON = json.loads(requests.get(url).text)
+	
+	print "|--[INFO][REPUTATION][>] " + JSON["reputation"]
+	print "|--[INFO][SUSPICIUS][>] " + str(JSON["suspicious"])
+	print "|--[INFO][BLACK LIST][>] " + str(JSON["details"]["blacklisted"])
+	print "|--[INFO][MALICIUS ACTIVITY][>] " + str(JSON["details"]["malicious_activity"])
+	print "|--[INFO][SPAM][>] " + str(JSON["details"]["spam"])
+	print "|--[INFO][MALICIUS ACTIVITY][>] " + str(JSON["details"]["malicious_activity"])
+	print "|--[INFO][SPOOFABLE][>] " + str(JSON["details"]["spoofable"])
+	print "|--[INFO][SPF STRICT][>] " + str(JSON["details"]["spf_strict"])
+	print "|--[INFO][DMARC ENFORCED][>] " + str(JSON["details"]["dmarc_enforced"])
+
+	DOMAIN = email.split("@")
+	print "|--[INFO][DOMAIN][>] Analyzing the domain " + DOMAIN[1]
+	print "|----[INFO][CHECK DOMAIN][>] " + str(JSON["details"]["domain_exists"])
+	print "|----[INFO][DOMAIN REPUTATION][>] " + str(JSON["details"]["domain_reputation"])
+	print "|----[INFO][NEW DOMAIN][>] " + str(JSON["details"]["new_domain"])
+	print "|------[INFO][DAYS SINCE DOMAIN CREATION][>] " + str(JSON["details"]["days_since_domain_creation"])
+	print "|------[INFO][FREE PROVIDER][>] " + str(JSON["details"]["free_provider"])
+
+	#RRSS Analyzer
+	print "|--[INFO][PROFILES IN SOCIAL NETWORKS][>] Analyzing..."
+	for profile in JSON["details"]["profiles"]:
+
+		print "|------[INFO][SOCIAL NETWORK][>] " + profile
+
+
 
 # Email spoofing generator php
 def generate_php(fromm, to, title, messaje):
@@ -282,16 +277,15 @@ def attack(email):
 			print colores.alert + "|--[INFO][EMAIL] No verification possible... " + colores.normal
 
 	#CALL THE ACTION
-	check_linkedin(email)
+	check_emailrep(email)
+	check_AccountTwitter(email)
 	check_wordpress(email)
 	check_netflix(email)
-	check_tumblr(email)
-	check_pastebin(email)
-	check_AccountTwitter(email)
-	check_duckduckgoInfo(email)
-	check_duckduckgoSmartInfo(email)
 	check_amazon(email)
 	check_haveibeenpwned(email)
+	check_pastebin(email)
+	check_duckduckgoInfo(email)
+	check_duckduckgoSmartInfo(email)
 
 def main():
 	global emails_list

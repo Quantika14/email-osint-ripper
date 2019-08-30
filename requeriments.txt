@@ -1,5 +1,9 @@
 beautifulsoup4
+
 mechanize
+
 cssselect
+
 validate_email
+
 pyDNS
