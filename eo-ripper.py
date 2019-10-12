@@ -10,7 +10,7 @@
 
 import json
 import re
-from typing import Dict, Generator, List, Set
+from typing import Dict, Generator, List, Optional
 
 import bs4
 import duckduckgo
@@ -166,8 +166,8 @@ def check_netflix(email: str) -> None:
         br.submit()
         html = br.response().read()
         soup = bs4.BeautifulSoup(html, "html.parser")
-        div: bs4.Tag = soup.find("div", {"class": "ui-message-contents"})
-        if "ninguna" in div.text:
+        div: Optional[bs4.Tag] = soup.find("div", {"class": "ui-message-contents"})
+        if div and "ninguna" in div.text:
             print("|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist...")
         else:
             print("|--[INFO][NETFLIX][ES][CHECK][>] The account exist...")
@@ -192,9 +192,9 @@ def check_amazon(email: str) -> None:
     html = br.response().read()
 
     soup = bs4.BeautifulSoup(html, "html.parser")
-    div: bs4.Tag = soup.find("div", {"class": "a-alert-content"})
+    div: Optional[bs4.Tag] = soup.find("div", {"class": "a-alert-content"})
 
-    if "ya existe una cuenta" in div.text:
+    if div and "ya existe una cuenta" in div.text:
         print(
             f"{colores['green']}|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist...{colores['normal']}"
         )
@@ -204,7 +204,6 @@ def check_amazon(email: str) -> None:
 
 def check_haveibeenpwned(email: str) -> None:
     url = f"https://haveibeenpwned.com/account/{email}"
-    br.open(url)
     html = br.open(url)
     soup = bs4.BeautifulSoup(html, "html.parser")
     if soup.find(
@@ -311,8 +310,7 @@ def attack(email: str) -> None:
             else:
                 print(f"[INFO][TARGET][>] {email}")
                 print("|--[INFO][EMAIL][>] It's not created...")
-        except Exception as e:
-            print(e)
+        except Exception:
             print(f"[INFO][TARGET][>] {email}")
             print(
                 f"{colores['alert']}|--[INFO][EMAIL] No verification possible... {colores['normal']}"
