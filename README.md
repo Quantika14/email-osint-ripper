@@ -1,7 +1,8 @@
 # email-osint-ripper
 
 EO-RIPPER.PY es una herramienta creada en Python con el objetivo de realizar un OSINT a un email o lista de emails.
-Se necesta python >= 3.6
+
+Se necesita python >= 3.6
 
 # Vídeos
 [![Cómo hacer OSINT a un email](https://github.com/Quantika14/email-osint-ripper/blob/master/Images/banner1.jpg)](https://www.youtube.com/watch?v=Eo9_mJLBc2c&t=254s)
