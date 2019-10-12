@@ -1,225 +1,345 @@
-#!/usr/bin/env python
-#-*- coding:utf-8 -*-
-#*******************************************
-#APP: EO-RIPPER.py                       ***
-#AUTHOR: Jorge Websec                    ***
-#TWITTER: @JorgeWebsec                   ***
-#Email: jorge@quantika14.com             ***
-#License: GNU v3                         ***
-#*******************************************
+# *******************************************
+# APP: EO-RIPPER.py                       ***
+# AUTHOR: Jorge Websec                    ***
+# TWITTER: @JorgeWebsec                   ***
+# Email: jorge@quantika14.com             ***
+# License: GNU v3                         ***
+# *******************************************
 
-import re, mechanize, json, duckduckgo, urllib2, requests
+# pylint: disable=locally-disabled, no-member, assignment-from-none
+
+import json
+import re
+from typing import Dict, List
+
+import duckduckgo
+import mechanize
 import requests
+import urllib3
 from bs4 import BeautifulSoup
 from validate_email import validate_email
 
 emails_list = "emails.txt"
 
-class colores:
-    header = '\033[95m'
-    blue = '\033[94m'
-    green = '\033[92m'
-    alert = '\033[93m'
-    fail = '\033[91m'
-    normal = '\033[0m'
-    bold = '\033[1m'
-    underline = '\033[4m'
+
+colores: Dict[str, str] = dict(
+    header="\033[95m",
+    blue="\033[94m",
+    green="\033[92m",
+    alert="\033[93m",
+    fail="\033[91m",
+    normal="\033[0m",
+    bold="\033[1m",
+    underline="\033[4m",
+)
 
 br = mechanize.Browser()
-br.set_handle_equiv( True ) 
-br.set_handle_gzip( True ) 
-br.set_handle_redirect( True ) 
-br.set_handle_referer( True ) 
-br.set_handle_robots( False ) 
-br.set_handle_refresh( mechanize._http.HTTPRefreshProcessor(), max_time = 1 ) 
-br.addheaders = [ ( 'User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1' ) ] 
+br.set_handle_equiv(True)
+br.set_handle_gzip(True)
+br.set_handle_redirect(True)
+br.set_handle_referer(True)
+br.set_handle_robots(False)
+br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
+br.addheaders = [
+    (
+        "User-agent",
+        "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1",
+    )
+]
 
-TAG_RE = re.compile(r'<[^>]+>')
-def remove_tags(text):
-	return TAG_RE.sub('', text)
+TAG_RE: re.Pattern = re.compile(r"<[^>]+>")
 
-def get_usernameEmail(email):
-	email = email.split("@")
-	username = email[0]
-	return username.replace(".","")
 
-def check_wordpress(email):
-	try:
-		r = br.open('http://wordpress.com/wp-login.php')
-		br.select_form("loginform")
-		br.form["log"] = email
-		br.form["pwd"] = "123456"
-		br.submit()
-		respuestaWP = br.response().geturl()
-		html =  br.response().read()
-		soup = BeautifulSoup(html, "html.parser")
-		divError = soup.findAll("div", {"id": "login_error"})
-		div = remove_tags(str(divError))
-		if "incorrect" in div:
-			print "|--[INFO][WordPress][CHECK][>] The account exist..."
+def remove_tags(text: str) -> str:
+    return TAG_RE.sub("", text)
 
-		if "Invalid" in div:
-			print "|--[INFO][WordPress][CHECK][>] Account doesn't exist..."
-	except:
-		print colores.alert + "|--[WARNING][LinkedIn][>] Error..." + colores.normal
 
-def check_pastebin(email):
-	url = "http://pastebin.com/search?q=" + email.replace(" ", "+")
-	print "|--[INFO][PASTEBIN][SEARCH][>] " + url + "..."
-	html = br.open(url).read()
-	soup = BeautifulSoup(html, "html.parser")
-	for div in soup.findAll("div", {"class", "gsc-thumbnail-inside"}):
-		print "|--[INFO][PASTEBIN][URL][>]" + str(div)
+def get_username_email(email: str) -> str:
+    email_as_list: List[str] = email.split("@")
+    username: str = email_as_list[0]
+    return username.replace(".", "")
 
-def check_duckduckgoInfo(email):
-	try:
-		links = duckduckgo.search(email, max_results=10)
-		for link in links:
-			if "delsexo.com" in str(link):
-				pass
-			else:
-				print "|--[INFO][DuckDuckGO][SEARCH][>] " + str(link)
-	except:
-		print colores.alert + "|--[WARNING][DUCKDUCKGO][>] Error..." + colores.normal
 
-def check_duckduckgoSmartInfo(email):
-	no_company = ("gmail"," hotmail"," yahoo"," protonmail"," mail")
-	split1 = email.split("@")
-	name = split1[0].replace("."," ")
-	split2 = split1[1].split(".")
-	company = split2[0].replace(".", "")
-	if company in no_company:
-		data = name
-	else:
-		data = name + " " + company
-	links = duckduckgo.search(data, max_results=10)
-	for link in links:
-		print "|--[INFO][DuckDuckGO][SMART SEARCH][>] " + str(link)
-		if "linkedin.com/in/" in str(link):
-			print colores.green + "|----[>][POSSIBLE LINKEDIN DETECT] ----" + colores.normal
-		if "twitter.com" in str(link):
-			print colores.green + "|----[>][POSSIBLE TWITTER DETECT] ----" + colores.normal
-		if "facebook.com" in str(link):
-			print colores.green + "|----[>][POSSIBLE FACEBOOK DETECT] ----" + colores.normal
-		if "soundcloud.com/" in str(link):
-			print colores.green + "|----[>][POSSIBLE SOUNDCLOUD DETECT] ----" + colores.normal
+def check_wordpress(email: str) -> None:
+    try:
+        br.open("http://wordpress.com/wp-login.php")
+        br.select_form("loginform")
+        br.form["log"] = email
+        br.form["pwd"] = "123456"
+        br.submit()
+        html = br.response().read()
+        soup = BeautifulSoup(html, "html.parser")
+        div_error = soup.find_all("div", {"id": "login_error"})
+        div: str = remove_tags(str(div_error))
+        if "incorrect" in div:
+            print("|--[INFO][WordPress][CHECK][>] The account exist...")
 
-def check_AccountTwitter(email):
-	username = get_usernameEmail(email)
-	url = "https://twitter.com/" + username
-	try:
-		html = requests.get(url).text
-		soup = BeautifulSoup(html, "html.parser")
-		for text in soup.findAll("h1"):
-			text = remove_tags(str(text))
-			if "Sorry" in text or "Lo sentimos," in text:
-				print "|--[INFO][Twitter][" + colores.blue+ username + colores.normal + "][>] Account doesn't exist..."
-			else:
-				print colores.green + "|--[INFO][Twitter][" + colores.blue+ username + colores.green + "][>] The account exist." + colores.normal
-	except urllib2.HTTPError:
-		print colores.alert + "|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error..." + colores.normal
+        else:
+            print("|--[INFO][WordPress][CHECK][>] Account doesn't exist...")
+    except mechanize.FormNotFoundError as e:
+        print(e)
+        print(
+            f"{colores['alert']} |--[WARNING][LinkedIn][>] Error... {colores['normal']}"
+        )
 
-def check_netflix(email):
-	try:
-		r = br.open('https://www.netflix.com/es/login')
-		br.select_form(nr=0)
-		br.form["userLoginId"] = email
-		br.form["password"] = "123456"
-		br.submit()
-		respuestaURL = br.response().geturl()
-		html =  br.response().read()
-		soup = BeautifulSoup(html, "html.parser")
-		div = soup.find("div",{"class":"ui-message-contents"})
-		if "ninguna" in remove_tags(str(div)):
-			print "|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist..."
-		else:
-			print "|--[INFO][NETFLIX][ES][CHECK][>] The account exist..."
-	except:
-		print colores.alert + "|--[ERROR][Check_Netflix][>] Netflix error..." + colores.normal
 
-def check_amazon(email):
-	r = br.open('https://www.amazon.es/ap/register?showRememberMe=true&openid.pape.max_auth_age=0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=esflex&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26action%3Dsign-out%26path%3D%252Fgp%252Fyourstore%252Fhome%26ref_%3Dnav_youraccount_signout%26signIn%3D1%26useRedirectOnSuccess%3D1&prevRID=8JDMFMXKWNZQKE8EYVTH&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&prepopulatedLoginId=&failedSignInCount=0&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ubid=259-8895990-3455759')
-	br.select_form(nr=0)
-	br.form["customerName"] = "Gustavo Becquer"
-	br.form["email"] = email
-	br.form["password"] = "123456//eoripper"
-	br.form["passwordCheck"] = "123456//eoripper"
-	br.submit()
+def check_pastebin(email: str) -> None:
+    url = f"http://pastebin.com/search?q={email.replace(' ', '+')}"
+    print(f"|--[INFO][PASTEBIN][SEARCH][>] {url} ...")
+    html = br.open(url).read()
+    soup = BeautifulSoup(html, "html.parser")
+    for div in soup.find_all("div", {"class", "gsc-thumbnail-inside"}):
+        print(f"|--[INFO][PASTEBIN][URL][>]{div}")
 
-	html = br.response().read()
 
-	soup = BeautifulSoup(html, "html.parser")
-	div = soup.find("div", {"class":"a-alert-content"})
+def check_duckduckgo_info(email: str) -> None:
+    try:
+        links = duckduckgo.search(email, max_results=10)
+        for link in links:
+            if "delsexo.com" not in str(link):
+                print(f"|--[INFO][DuckDuckGO][SEARCH][>] {link}")
+    except:
+        print(
+            f"{colores['alert']}|--[WARNING][DUCKDUCKGO][>] Error...{colores['normal']}"
+        )
 
-	if "ya existe una cuenta" in remove_tags(str(div)):
-		print "|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist..."
-	else:
-		print "|--[INFO][AMAZON][ES][CHECK][>] The account exist..."
 
-def check_haveibeenpwned(email):
-	url = "https://haveibeenpwned.com/account/" + email
-	html = br.open(url)
-	soup = BeautifulSoup(html, "html.parser")
-	if soup.find("div", {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"}):
-		print "|--[INFO][HAVEIBEENPWNED][>] Your email appear in leaks..."
-	else:
-		print "|--[INFO][HAVEIBEENPWNED][>] Your email doesn't appear in leaks..."
+def check_duckduckgo_smart_info(email: str) -> None:
+    no_company = ("gmail", " hotmail", " yahoo", " protonmail", " mail")
+    split1: List[str] = email.split("@")
+    name: str = split1[0].replace(".", " ")
+    split2: List[str] = split1[1].split(".")
+    company: str = split2[0].replace(".", "")
 
-def check_emailrep(email):
-	url = "https://emailrep.io/" + email
-	JSON = json.loads(requests.get(url).text)
-	
-	print "|--[INFO][REPUTATION][>] " + JSON["reputation"]
-	print "|--[INFO][SUSPICIUS][>] " + str(JSON["suspicious"])
-	print "|--[INFO][BLACK LIST][>] " + str(JSON["details"]["blacklisted"])
-	print "|--[INFO][MALICIUS ACTIVITY][>] " + str(JSON["details"]["malicious_activity"])
-	print "|--[INFO][SPAM][>] " + str(JSON["details"]["spam"])
-	print "|--[INFO][MALICIUS ACTIVITY][>] " + str(JSON["details"]["malicious_activity"])
-	print "|--[INFO][SPOOFABLE][>] " + str(JSON["details"]["spoofable"])
-	print "|--[INFO][SPF STRICT][>] " + str(JSON["details"]["spf_strict"])
-	print "|--[INFO][DMARC ENFORCED][>] " + str(JSON["details"]["dmarc_enforced"])
+    data: str
+    if company in no_company:
+        data = name
+    else:
+        data = f"{name} {company}"
 
-	DOMAIN = email.split("@")
-	print "|--[INFO][DOMAIN][>] Analyzing the domain " + DOMAIN[1]
-	print "|----[INFO][CHECK DOMAIN][>] " + str(JSON["details"]["domain_exists"])
-	print "|----[INFO][DOMAIN REPUTATION][>] " + str(JSON["details"]["domain_reputation"])
-	print "|----[INFO][NEW DOMAIN][>] " + str(JSON["details"]["new_domain"])
-	print "|------[INFO][DAYS SINCE DOMAIN CREATION][>] " + str(JSON["details"]["days_since_domain_creation"])
-	print "|------[INFO][FREE PROVIDER][>] " + str(JSON["details"]["free_provider"])
+    links = duckduckgo.search(data, max_results=10)
+    for link in links:
+        link_as_str = str(link)
+        print(f"|--[INFO][DuckDuckGO][SMART SEARCH][>] {link_as_str}")
+        if "linkedin.com/in/" in link_as_str:
+            print(
+                f"{colores['green']}|----[>][POSSIBLE LINKEDIN DETECT] ----{colores['normal']}"
+            )
+        if "twitter.com" in link_as_str:
+            print(
+                f"{colores['green']}|----[>][POSSIBLE TWITTER DETECT] ----{colores['normal']}"
+            )
+        if "facebook.com" in link_as_str:
+            print(
+                f"{colores['green']}|----[>][POSSIBLE FACEBOOK DETECT] ----{colores['normal']}"
+            )
+        if "soundcloud.com/" in link_as_str:
+            print(
+                f"{colores['green']}|----[>][POSSIBLE SOUNDCLOUD DETECT] ----{colores['normal']}"
+            )
 
-	#RRSS Analyzer
-	print "|--[INFO][PROFILES IN SOCIAL NETWORKS][>] Analyzing..."
-	for profile in JSON["details"]["profiles"]:
 
-		print "|------[INFO][SOCIAL NETWORK][>] " + profile
+def check_account_twitter(email: str) -> None:
+    username: str = get_username_email(email)
+    url = f"https://twitter.com/{username}"
+    try:
+        html: str = requests.get(url).text
+        soup = BeautifulSoup(html, "html.parser")
+        for text in soup.find_all("h1"):
+            text: str = remove_tags(str(text))
+            if "Sorry" in text or "Lo sentimos," in text:
+                print(
+                    f"|--[INFO][Twitter][{colores['blue']}"
+                    f"{username}{colores['normal']}][>] Account doesn't exist..."
+                )
+            else:
+                print(
+                    f"{colores['green']}|--[INFO][Twitter][{colores['blue']}"
+                    f"{username}{colores['green']}][>] The account exist. {colores['normal']}"
+                )
+    except urllib3.exceptions.HTTPError:
+        print(
+            f"{colores['alert']}|--[404 HTTP RESPONSE][Check_AccountTwitter][>] 404 HTTP Twitter error...{colores['normal']}"
+        )
 
+
+def check_netflix(email: str) -> None:
+    try:
+        br.open("https://www.netflix.com/es/login")
+        br.select_form(nr=0)
+        br.form["userLoginId"] = email
+        br.form["password"] = "123456"
+        br.submit()
+        html = br.response().read()
+        soup = BeautifulSoup(html, "html.parser")
+        div = soup.find("div", {"class": "ui-message-contents"})
+        if "ninguna" in remove_tags(str(div)):
+            print("|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist...")
+        else:
+            print("|--[INFO][NETFLIX][ES][CHECK][>] The account exist...")
+
+    except Exception as e:
+        print(e)
+        print(
+            f"{colores['alert']}|--[ERROR][Check_Netflix][>] Netflix error...{colores['normal']}"
+        )
+
+
+def check_amazon(email: str) -> None:
+    br.open(
+        "https://www.amazon.es/ap/register?showRememberMe=true&openid.pape.max_auth_age=0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=esflex&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26action%3Dsign-out%26path%3D%252Fgp%252Fyourstore%252Fhome%26ref_%3Dnav_youraccount_signout%26signIn%3D1%26useRedirectOnSuccess%3D1&prevRID=8JDMFMXKWNZQKE8EYVTH&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&prepopulatedLoginId=&failedSignInCount=0&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ubid=259-8895990-3455759"
+    )
+    br.select_form(nr=0)
+    br.form["customerName"] = "Gustavo Becquer"
+    br.form["email"] = email
+    br.form["password"] = "123456//eoripper"
+    br.form["passwordCheck"] = "123456//eoripper"
+    br.submit()
+
+    html = br.response().read()
+
+    soup = BeautifulSoup(html, "html.parser")
+    div = soup.find("div", {"class": "a-alert-content"})
+
+    if "ya existe una cuenta" in remove_tags(str(div)):
+        print("|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist...")
+    else:
+        print("|--[INFO][AMAZON][ES][CHECK][>] The account exist...")
+
+
+def check_haveibeenpwned(email: str) -> None:
+    url = f"https://haveibeenpwned.com/account/{email}"
+    br.open(url)
+    html = br.open(url)
+    soup = BeautifulSoup(html, "html.parser")
+    if soup.find(
+        "div",
+        {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"},
+    ):
+        print("|--[INFO][HAVEIBEENPWNED][>] Your email appear in leaks...")
+    else:
+        print("|--[INFO][HAVEIBEENPWNED][>] Your email doesn't appear in leaks...")
+
+
+def check_emailrep(email: str) -> None:
+    url = f"https://emailrep.io/{email}"
+    JSON = json.loads(requests.get(url).text)
+    JSON_DETAILS = JSON["details"]
+    print(
+        f"|--[INFO][REPUTATION][>] {JSON['reputation']}\n"
+        f"|--[INFO][SUSPICIUS][>] {JSON['suspicious']}\n"
+        f"|--[INFO][BLACK LIST][>] {JSON_DETAILS['blacklisted']}\n"
+        f"|--[INFO][MALICIUS ACTIVITY][>] {JSON_DETAILS['malicious_activity']}\n"
+        f"|--[INFO][SPAM][>] {JSON_DETAILS['spam']}\n"
+        f"|--[INFO][MALICIUS ACTIVITY][>] {JSON_DETAILS['malicious_activity']}\n"
+        f"|--[INFO][SPOOFABLE][>] {JSON_DETAILS['spoofable']}\n"
+        f"|--[INFO][SPF STRICT][>] {JSON_DETAILS['spf_strict']}\n"
+        f"|--[INFO][DMARC ENFORCED][>] {JSON_DETAILS['dmarc_enforced']}"
+    )
+
+    DOMAIN = email.split("@")
+    print(
+        f"|--[INFO][DOMAIN][>] Analyzing the domain {DOMAIN[1]}\n"
+        f"|----[INFO][CHECK DOMAIN][>] {JSON_DETAILS['domain_exists']}\n"
+        f"|----[INFO][DOMAIN REPUTATION][>] {JSON_DETAILS['domain_reputation']}\n"
+        f"|----[INFO][NEW DOMAIN][>] {JSON_DETAILS['new_domain']}\n"
+        f"|------[INFO][DAYS SINCE DOMAIN CREATION][>] {JSON_DETAILS['days_since_domain_creation']}\n"
+        f"|------[INFO][FREE PROVIDER][>] {JSON_DETAILS['free_provider']}"
+    )
+
+    # RRSS Analyzer
+    print("|--[INFO][PROFILES IN SOCIAL NETWORKS][>] Analyzing...")
+    for profile in JSON_DETAILS["profiles"]:
+        print(f"|------[INFO][SOCIAL NETWORK][>] {profile}")
 
 
 # Email spoofing generator php
-def generate_php(fromm, to, title, messaje):
-	php = """<?php
-$from      = '""" + fromm + """';
-$titulo    = '""" + title + """';
-$mensaje   = '""" + messaje + """';
-$cabeceras = 'From: """ + to + """' . "\r\n" .
-    'Reply-To: nice@eo-ripper.py' . "\r\n" .
-    'X-Mailer: PHP/' . phpversion();
+def generate_php(from_: str, to: str, title: str, message: str) -> None:
+    php = (
+        "<?php"
+        f"$from      = '{from_}';"
+        f"$titulo    = '{title}';"
+        f"$mensaje   = '{message}';"
+        f"$cabeceras = 'From: {to}' . '\r\n' ."
+        "   'Reply-To: nice@eo-ripper.py' . '\r\n' ."
+        "    'X-Mailer: PHP/' . phpversion();"
+        "mail($from, $titulo, $mensaje, $cabeceras);"
+        "echo 'Todo OK!';"
+        "?>"
+    )
+    with open("evilmail.php", "a") as f:
+        f.write(php)
 
-mail($from, $titulo, $mensaje, $cabeceras);
-echo "Todo OK!";
-?>"""
-	f = open("evilmail.php", "a");
-	f.write(php)
-	f.close()
-	print "[|--[EO-RIPPER][SAY][>] the evilmail.php has been created!"
+    print("[|--[EO-RIPPER][SAY][>] the evilmail.php has been created!")
 
-def banner():
-	print """
+
+def menu() -> int:
+    menu = (
+        "\n"
+        "------------------------------------------------------------------------\n"
+        "--- 1. Emails list (default: emails.txt)                             ---\n"
+        "--- 2. Only one target                                               ---\n"
+        "--- 3. Email spoofing generate                                       ---\n"
+        "------------------------------------------------------------------------\n"
+    )
+
+    while True:
+        print(menu)
+
+        try:
+            answer = int(input("Select 1/2/3: "))
+        except ValueError:
+            print("Expected integer input")
+        else:
+            break
+
+    return answer
+
+
+def attack(email: str) -> None:
+    email = email.replace("\n", "")
+
+    ok: bool
+    if re.match(r"^[(a-z0-9\_\-\.)]+@[(a-z0-9\_\-\.)]+\.[(a-z)]{2,15}$", email.lower()):
+        print(f"[INFO][TARGET][>] Hello, {email} is correct.")
+        ok = True
+    else:
+        print(f"[INFO][TARGET][>] Hello, {email} doesn't a email. Try again!'")
+        ok = False
+
+    if ok:
+        try:
+            is_valid: bool = validate_email(email, verify=True)
+            if is_valid:
+                print(f"[INFO][TARGET][>] {email}")
+                print("|--[INFO][EMAIL][>] Email validated...")
+            else:
+                print(f"[INFO][TARGET][>] {email}")
+                print("|--[INFO][EMAIL][>] It's not created...")
+        except Exception:
+            print(f"[INFO][TARGET][>] {email}")
+            print(
+                f"{colores['alert']} |--[INFO][EMAIL] No verification possible... {colores['normal']}"
+            )
+
+    # CALL THE ACTION
+    check_emailrep(email)
+    check_account_twitter(email)
+    check_wordpress(email)
+    check_netflix(email)
+    check_amazon(email)
+    check_haveibeenpwned(email)
+    check_pastebin(email)
+    check_duckduckgo_info(email)
+    check_duckduckgo_smart_info(email)
+
+
+banner = """
 ███████╗ ██████╗       ██████╗ ██╗██████╗ ██████╗ ███████╗██████╗    ██████╗ ██╗   ██╗
 ██╔════╝██╔═══██╗      ██╔══██╗██║██╔══██╗██╔══██╗██╔════╝██╔══██╗   ██╔══██╗╚██╗ ██╔╝
-█████╗  ██║   ██║█████╗██████╔╝██║██████╔╝██████╔╝█████╗  ██████╔╝   ██████╔╝ ╚████╔╝ 
-██╔══╝  ██║   ██║╚════╝██╔══██╗██║██╔═══╝ ██╔═══╝ ██╔══╝  ██╔══██╗   ██╔═══╝   ╚██╔╝  
-███████╗╚██████╔╝      ██║  ██║██║██║     ██║     ███████╗██║  ██║██╗██║        ██║   
+█████╗  ██║   ██║█████╗██████╔╝██║██████╔╝██████╔╝█████╗  ██████╔╝   ██████╔╝ ╚████╔╝
+██╔══╝  ██║   ██║╚════╝██╔══██╗██║██╔═══╝ ██╔═══╝ ██╔══╝  ██╔══██╗   ██╔═══╝   ╚██╔╝
+███████╗╚██████╔╝      ██║  ██║██║██║     ██║     ███████╗██║  ██║██╗██║        ██║
 ╚══════╝ ╚═════╝       ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝        ╚═╝
       Author: Jorge Websec | Twitter: @JorgeWebsec | jorge.coronado@quantika14.com
 -------------------------------------------------------------------------------------
@@ -238,93 +358,42 @@ Date latest version: 30/08/2019 | Version: 1.3.0
 -------------------------------------------------------------------------------------
 """
 
-def menu():
-	print ""
-	print "------------------------------------------------------------------------"
-	print "--- 1. Emails list (default: emails.txt)                             ---"
-	print "--- 2. Only one target                                               ---"
-	print "--- 3. Email spoofing generate                                       ---"
-	print "------------------------------------------------------------------------"
-	print ""
-	x = int(raw_input("Select 1/2/3: "))
-	if type(x) != int:
-		print "[Warning][Menu][>] Error..."
-		menu()
-	else:
-		return x
-
-def attack(email):
-	email = email.replace("\n", "")
-
-	if re.match('^[(a-z0-9\_\-\.)]+@[(a-z0-9\_\-\.)]+\.[(a-z)]{2,15}$', email.lower()):
-		print "[INFO][TARGET][>] Hello, " + email + " is correct."
-		ok = True
-	else:
-		print "[INFO][TARGET][>] Hello, " + email + " doesn't a email. Try again!'"
-		ok = False
-		
-	if ok == True:
-		url = "http://www.verifyemailaddress.org/es/"
-		try:
-			is_valid = validate_email(email,verify=True)
-			if is_valid:
-				print "[INFO][TARGET][>] " + email
-				print "|--[INFO][EMAIL][>] Email validated..."
-			else:
-				print "[INFO][TARGET][>] " + email
-				print "|--[INFO][EMAIL][>] It's not created..."
-		except:
-			print "[INFO][TARGET][>] " + email
-			print colores.alert + "|--[INFO][EMAIL] No verification possible... " + colores.normal
-
-	#CALL THE ACTION
-	check_emailrep(email)
-	check_AccountTwitter(email)
-	check_wordpress(email)
-	check_netflix(email)
-	check_amazon(email)
-	check_haveibeenpwned(email)
-	check_pastebin(email)
-	check_duckduckgoInfo(email)
-	check_duckduckgoSmartInfo(email)
-
-def main():
-	global emails_list
-	banner()
-	m = menu()
-	if m == 1:
-		print "[INFO][Emails list][>] By default 'emails.txt'..."
-		print "[INFO][Emails list][>] If you want by default, press ENTER."
-		file = open(emails_list, 'r')
-		for email in file.readlines():
-			attack(email.replace("\n", ""))
-	if m == 2:
-		email = str(raw_input("Email: "))
-		attack(email)
-	if m == 3:
-		print "-----------------------------------------------------"
-		print "--               START EMAIL SPOOFING                "
-		print "-----------------------------------------------------"
-		print "INSTRUCTIONS: "
-		print "1. Generate evilmail.php"
-		print "2. Upload to hosting with email server"
-		print "3. Run the evilmail.php from the browser"
-		print "4. Enjoy!"
-		print "-----------------------------------------------------"
-		print " "
-
-		fromm = str(raw_input("From:"))
-		to = str(raw_input("To: "))
-		title = str(raw_input("Title: "))
-		messaje = str(raw_input("Messaje: "))
-		generate_php(fromm, to, title, messaje)
-
-	if m <0 or m > 3:
-		print "|--[EO-RIPPER][SAY][>] Are you stupid?"
-		print "|--[EO-RIPPER][SAY][>] 1 or 2 or 3."
-	if type(m) == str:
-		print "|--[EO-RIPPER][SAY][>] Are you stupid?"
-		print "|--[EO-RIPPER][SAY][>] 1 or 2 or 3."
-
 if __name__ == "__main__":
-	main()
+    print(banner)
+    choice = menu()
+    if choice == 1:
+        print("[INFO][Emails list][>] By default 'emails.txt'...")
+        print("[INFO][Emails list][>] If you want by default, press ENTER.")
+        with open(emails_list) as file:
+            for email in file.readlines():
+                attack(email.replace("\n", ""))
+
+    elif choice == 2:
+        email = input("Email: ")
+        attack(email)
+
+    elif choice == 3:
+        print(
+            "-----------------------------------------------------\n"
+            "--               START EMAIL SPOOFING                \n"
+            "-----------------------------------------------------\n"
+            "INSTRUCTIONS: \n"
+            "1. Generate evilmail.php\n"
+            "2. Upload to hosting with email server\n"
+            "3. Run the evilmail.php from the browser\n"
+            "4. Enjoy!\n"
+            "-----------------------------------------------------\n"
+        )
+
+        from_ = input("From:")
+        to = input("To: ")
+        title = input("Title: ")
+        message = input("Message: ")
+        generate_php(from_, to, title, message)
+
+    else:
+        print(
+            "|--[EO-RIPPER][SAY][>] Are you stupid?",
+            "|--[EO-RIPPER][SAY][>] 1, 2 or 3.",
+            sep="\n",
+        )
