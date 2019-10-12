@@ -10,13 +10,13 @@
 
 import json
 import re
-from typing import Dict, List
+from typing import Dict, Generator, List, Set
 
+import bs4
 import duckduckgo
 import mechanize
 import requests
 import urllib3
-from bs4 import BeautifulSoup
 from validate_email import validate_email
 
 emails_list = "emails.txt"
@@ -47,12 +47,6 @@ br.addheaders = [
     )
 ]
 
-TAG_RE: re.Pattern = re.compile(r"<[^>]+>")
-
-
-def remove_tags(text: str) -> str:
-    return TAG_RE.sub("", text)
-
 
 def get_username_email(email: str) -> str:
     email_as_list: List[str] = email.split("@")
@@ -67,19 +61,19 @@ def check_wordpress(email: str) -> None:
         br.form["log"] = email
         br.form["pwd"] = "123456"
         br.submit()
+
         html = br.response().read()
-        soup = BeautifulSoup(html, "html.parser")
-        div_error = soup.find_all("div", {"id": "login_error"})
-        div: str = remove_tags(str(div_error))
-        if "incorrect" in div:
+        soup = bs4.BeautifulSoup(html, "html.parser")
+        error_divs: List[bs4.Tag] = soup.find_all("div", {"id": "login_error"})
+        text_of_divs: str = "".join([element.text for element in error_divs])
+        if "incorrect" in text_of_divs:
             print("|--[INFO][WordPress][CHECK][>] The account exist...")
 
         else:
             print("|--[INFO][WordPress][CHECK][>] Account doesn't exist...")
-    except mechanize.FormNotFoundError as e:
-        print(e)
+    except mechanize.FormNotFoundError:
         print(
-            f"{colores['alert']} |--[WARNING][LinkedIn][>] Error... {colores['normal']}"
+            f"{colores['alert']}|--[WARNING][LinkedIn][>] Error... {colores['normal']}"
         )
 
 
@@ -87,18 +81,18 @@ def check_pastebin(email: str) -> None:
     url = f"http://pastebin.com/search?q={email.replace(' ', '+')}"
     print(f"|--[INFO][PASTEBIN][SEARCH][>] {url} ...")
     html = br.open(url).read()
-    soup = BeautifulSoup(html, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
     for div in soup.find_all("div", {"class", "gsc-thumbnail-inside"}):
         print(f"|--[INFO][PASTEBIN][URL][>]{div}")
 
 
 def check_duckduckgo_info(email: str) -> None:
     try:
-        links = duckduckgo.search(email, max_results=10)
+        links: Generator = duckduckgo.search(email, max_results=10)
         for link in links:
             if "delsexo.com" not in str(link):
                 print(f"|--[INFO][DuckDuckGO][SEARCH][>] {link}")
-    except:
+    except Exception:
         print(
             f"{colores['alert']}|--[WARNING][DUCKDUCKGO][>] Error...{colores['normal']}"
         )
@@ -117,7 +111,7 @@ def check_duckduckgo_smart_info(email: str) -> None:
     else:
         data = f"{name} {company}"
 
-    links = duckduckgo.search(data, max_results=10)
+    links: Generator = duckduckgo.search(data, max_results=10)
     for link in links:
         link_as_str = str(link)
         print(f"|--[INFO][DuckDuckGO][SMART SEARCH][>] {link_as_str}")
@@ -144,9 +138,9 @@ def check_account_twitter(email: str) -> None:
     url = f"https://twitter.com/{username}"
     try:
         html: str = requests.get(url).text
-        soup = BeautifulSoup(html, "html.parser")
-        for text in soup.find_all("h1"):
-            text: str = remove_tags(str(text))
+        soup = bs4.BeautifulSoup(html, "html.parser")
+        for element in soup.find_all("h1"):
+            text: str = element.text
             if "Sorry" in text or "Lo sentimos," in text:
                 print(
                     f"|--[INFO][Twitter][{colores['blue']}"
@@ -171,15 +165,14 @@ def check_netflix(email: str) -> None:
         br.form["password"] = "123456"
         br.submit()
         html = br.response().read()
-        soup = BeautifulSoup(html, "html.parser")
-        div = soup.find("div", {"class": "ui-message-contents"})
-        if "ninguna" in remove_tags(str(div)):
+        soup = bs4.BeautifulSoup(html, "html.parser")
+        div: bs4.Tag = soup.find("div", {"class": "ui-message-contents"})
+        if "ninguna" in div.text:
             print("|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist...")
         else:
             print("|--[INFO][NETFLIX][ES][CHECK][>] The account exist...")
 
-    except Exception as e:
-        print(e)
+    except Exception:
         print(
             f"{colores['alert']}|--[ERROR][Check_Netflix][>] Netflix error...{colores['normal']}"
         )
@@ -198,11 +191,13 @@ def check_amazon(email: str) -> None:
 
     html = br.response().read()
 
-    soup = BeautifulSoup(html, "html.parser")
-    div = soup.find("div", {"class": "a-alert-content"})
+    soup = bs4.BeautifulSoup(html, "html.parser")
+    div: bs4.Tag = soup.find("div", {"class": "a-alert-content"})
 
-    if "ya existe una cuenta" in remove_tags(str(div)):
-        print("|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist...")
+    if "ya existe una cuenta" in div.text:
+        print(
+            f"{colores['green']}|--[INFO][AMAZON][ES][CHECK][>] Account doesn't exist...{colores['normal']}"
+        )
     else:
         print("|--[INFO][AMAZON][ES][CHECK][>] The account exist...")
 
@@ -211,7 +206,7 @@ def check_haveibeenpwned(email: str) -> None:
     url = f"https://haveibeenpwned.com/account/{email}"
     br.open(url)
     html = br.open(url)
-    soup = BeautifulSoup(html, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
     if soup.find(
         "div",
         {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"},
@@ -316,10 +311,11 @@ def attack(email: str) -> None:
             else:
                 print(f"[INFO][TARGET][>] {email}")
                 print("|--[INFO][EMAIL][>] It's not created...")
-        except Exception:
+        except Exception as e:
+            print(e)
             print(f"[INFO][TARGET][>] {email}")
             print(
-                f"{colores['alert']} |--[INFO][EMAIL] No verification possible... {colores['normal']}"
+                f"{colores['alert']}|--[INFO][EMAIL] No verification possible... {colores['normal']}"
             )
 
     # CALL THE ACTION
