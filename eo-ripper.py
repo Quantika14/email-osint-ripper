@@ -19,7 +19,7 @@ import requests
 import urllib3
 from validate_email import validate_email
 
-emails_list = "emails.txt"
+EMAILS_LIST = "emails.txt"
 
 
 colores: Dict[str, str] = dict(
@@ -33,14 +33,14 @@ colores: Dict[str, str] = dict(
     underline="\033[4m",
 )
 
-br = mechanize.Browser()
-br.set_handle_equiv(True)
-br.set_handle_gzip(True)
-br.set_handle_redirect(True)
-br.set_handle_referer(True)
-br.set_handle_robots(False)
-br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
-br.addheaders = [
+BROWSER = mechanize.Browser()
+BROWSER.set_handle_equiv(True)
+BROWSER.set_handle_gzip(True)
+BROWSER.set_handle_redirect(True)
+BROWSER.set_handle_referer(True)
+BROWSER.set_handle_robots(False)
+BROWSER.set_handle_refresh(mechanize.HTTPRefreshProcessor(), max_time=1)
+BROWSER.addheaders = [
     (
         "User-agent",
         "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1",
@@ -56,14 +56,14 @@ def get_username_email(email: str) -> str:
 
 def check_wordpress(email: str) -> None:
     try:
-        br.open("http://wordpress.com/wp-login.php")
-        br.select_form("loginform")
-        br.form["log"] = email
-        br.form["pwd"] = "123456"
-        br.submit()
+        BROWSER.open("http://wordpress.com/wp-login.php")
+        BROWSER.select_form("loginform")
+        BROWSER.form["log"] = email
+        BROWSER.form["pwd"] = "123456"
+        BROWSER.submit()
 
-        html = br.response().read()
-        soup = bs4.BeautifulSoup(html, "html.parser")
+        html: bytes = BROWSER.response().read()
+        soup = bs4.Beautifulsoup(html, "html.parser")
         error_divs: List[bs4.Tag] = soup.find_all("div", {"id": "login_error"})
         text_of_divs: str = "".join([element.text for element in error_divs])
         if "incorrect" in text_of_divs:
@@ -78,10 +78,10 @@ def check_wordpress(email: str) -> None:
 
 
 def check_pastebin(email: str) -> None:
-    url = f"http://pastebin.com/search?q={email.replace(' ', '+')}"
-    print(f"|--[INFO][PASTEBIN][SEARCH][>] {url} ...")
-    html = br.open(url).read()
-    soup = bs4.BeautifulSoup(html, "html.parser")
+    URL = f"http://pastebin.com/search?q={email.replace(' ', '+')}"
+    print(f"|--[INFO][PASTEBIN][SEARCH][>] {URL} ...")
+    html: bytes = BROWSER.open(URL).read()
+    soup = bs4.Beautifulsoup(html, "html.parser")
     for div in soup.find_all("div", {"class", "gsc-thumbnail-inside"}):
         print(f"|--[INFO][PASTEBIN][URL][>]{div}")
 
@@ -135,10 +135,10 @@ def check_duckduckgo_smart_info(email: str) -> None:
 
 def check_account_twitter(email: str) -> None:
     username: str = get_username_email(email)
-    url = f"https://twitter.com/{username}"
+    URL = f"https://twitter.com/{username}"
     try:
-        html: str = requests.get(url).text
-        soup = bs4.BeautifulSoup(html, "html.parser")
+        html: str = requests.get(URL).text
+        soup = bs4.Beautifulsoup(html, "html.parser")
         for element in soup.find_all("h1"):
             text: str = element.text
             if "Sorry" in text or "Lo sentimos," in text:
@@ -159,13 +159,14 @@ def check_account_twitter(email: str) -> None:
 
 def check_netflix(email: str) -> None:
     try:
-        br.open("https://www.netflix.com/es/login")
-        br.select_form(nr=0)
-        br.form["userLoginId"] = email
-        br.form["password"] = "123456"
-        br.submit()
-        html = br.response().read()
-        soup = bs4.BeautifulSoup(html, "html.parser")
+        BROWSER.open("https://www.netflix.com/es/login")
+        BROWSER.select_form(nr=0)
+        BROWSER.form["userLoginId"] = email
+        BROWSER.form["password"] = "123456"
+        BROWSER.submit()
+
+        html: bytes = BROWSER.response().read()
+        soup = bs4.Beautifulsoup(html, "html.parser")
         div: Optional[bs4.Tag] = soup.find("div", {"class": "ui-message-contents"})
         if div and "ninguna" in div.text:
             print("|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist...")
@@ -179,19 +180,19 @@ def check_netflix(email: str) -> None:
 
 
 def check_amazon(email: str) -> None:
-    br.open(
+    BROWSER.open(
         "https://www.amazon.es/ap/register?showRememberMe=true&openid.pape.max_auth_age=0&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=esflex&openid.return_to=https%3A%2F%2Fwww.amazon.es%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26action%3Dsign-out%26path%3D%252Fgp%252Fyourstore%252Fhome%26ref_%3Dnav_youraccount_signout%26signIn%3D1%26useRedirectOnSuccess%3D1&prevRID=8JDMFMXKWNZQKE8EYVTH&openid.assoc_handle=esflex&openid.mode=checkid_setup&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&prepopulatedLoginId=&failedSignInCount=0&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ubid=259-8895990-3455759"
     )
-    br.select_form(nr=0)
-    br.form["customerName"] = "Gustavo Becquer"
-    br.form["email"] = email
-    br.form["password"] = "123456//eoripper"
-    br.form["passwordCheck"] = "123456//eoripper"
-    br.submit()
+    BROWSER.select_form(nr=0)
+    BROWSER.form["customerName"] = "Gustavo Becquer"
+    BROWSER.form["email"] = email
+    BROWSER.form["password"] = "123456//eoripper"
+    BROWSER.form["passwordCheck"] = "123456//eoripper"
+    BROWSER.submit()
 
-    html = br.response().read()
+    html: bytes = BROWSER.response().read()
 
-    soup = bs4.BeautifulSoup(html, "html.parser")
+    soup = bs4.Beautifulsoup(html, "html.parser")
     div: Optional[bs4.Tag] = soup.find("div", {"class": "a-alert-content"})
 
     if div and "ya existe una cuenta" in div.text:
@@ -203,9 +204,9 @@ def check_amazon(email: str) -> None:
 
 
 def check_haveibeenpwned(email: str) -> None:
-    url = f"https://haveibeenpwned.com/account/{email}"
-    html = br.open(url)
-    soup = bs4.BeautifulSoup(html, "html.parser")
+    URL = f"https://haveibeenpwned.com/account/{email}"
+    html: mechanize.response_seek_wrapper = BROWSER.open(URL)
+    soup = bs4.Beautifulsoup(html, "html.parser")
     if soup.find(
         "div",
         {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"},
@@ -216,9 +217,10 @@ def check_haveibeenpwned(email: str) -> None:
 
 
 def check_emailrep(email: str) -> None:
-    url = f"https://emailrep.io/{email}"
-    JSON = json.loads(requests.get(url).text)
-    JSON_DETAILS = JSON["details"]
+    URL = f"https://emailrep.io/{email}"
+    JSON: dict = json.loads(requests.get(URL).text)
+    JSON_DETAILS: dict = JSON["details"]
+
     print(
         f"|--[INFO][REPUTATION][>] {JSON['reputation']}\n"
         f"|--[INFO][SUSPICIUS][>] {JSON['suspicious']}\n"
@@ -231,9 +233,9 @@ def check_emailrep(email: str) -> None:
         f"|--[INFO][DMARC ENFORCED][>] {JSON_DETAILS['dmarc_enforced']}"
     )
 
-    DOMAIN = email.split("@")
+    domain: List[str] = email.split("@")
     print(
-        f"|--[INFO][DOMAIN][>] Analyzing the domain {DOMAIN[1]}\n"
+        f"|--[INFO][DOMAIN][>] Analyzing the domain {domain[1]}\n"
         f"|----[INFO][CHECK DOMAIN][>] {JSON_DETAILS['domain_exists']}\n"
         f"|----[INFO][DOMAIN REPUTATION][>] {JSON_DETAILS['domain_reputation']}\n"
         f"|----[INFO][NEW DOMAIN][>] {JSON_DETAILS['new_domain']}\n"
@@ -261,8 +263,8 @@ def generate_php(from_: str, to: str, title: str, message: str) -> None:
         "echo 'Todo OK!';"
         "?>"
     )
-    with open("evilmail.php", "a") as f:
-        f.write(php)
+    with open("evilmail.php", "a") as file:
+        file.write(php)
 
     print("[|--[EO-RIPPER][SAY][>] the evilmail.php has been created!")
 
@@ -293,18 +295,18 @@ def menu() -> int:
 def attack(email: str) -> None:
     email = email.replace("\n", "")
 
-    ok: bool
+    email_is_correct: bool
     if re.match(r"^[(a-z0-9\_\-\.)]+@[(a-z0-9\_\-\.)]+\.[(a-z)]{2,15}$", email.lower()):
         print(f"[INFO][TARGET][>] Hello, {email} is correct.")
-        ok = True
+        email_is_correct = True
     else:
         print(f"[INFO][TARGET][>] Hello, {email} doesn't a email. Try again!'")
-        ok = False
+        email_is_correct = False
 
-    if ok:
+    if email_is_correct:
         try:
-            is_valid: bool = validate_email(email, verify=True)
-            if is_valid:
+            email_is_valid: bool = validate_email(email, verify=True)
+            if email_is_valid:
                 print(f"[INFO][TARGET][>] {email}")
                 print("|--[INFO][EMAIL][>] Email validated...")
             else:
@@ -354,11 +356,11 @@ Date latest version: 30/08/2019 | Version: 1.3.0
 
 if __name__ == "__main__":
     print(banner)
-    choice = menu()
+    choice: int = menu()
     if choice == 1:
         print("[INFO][Emails list][>] By default 'emails.txt'...")
         print("[INFO][Emails list][>] If you want by default, press ENTER.")
-        with open(emails_list) as file:
+        with open(EMAILS_LIST) as file:
             for email in file.readlines():
                 attack(email.replace("\n", ""))
 
@@ -369,9 +371,9 @@ if __name__ == "__main__":
     elif choice == 3:
         print(
             "-----------------------------------------------------\n"
-            "--               START EMAIL SPOOFING                \n"
+            "--               START EMAIL SPOOFING\n"
             "-----------------------------------------------------\n"
-            "INSTRUCTIONS: \n"
+            "INSTRUCTIONS:\n"
             "1. Generate evilmail.php\n"
             "2. Upload to hosting with email server\n"
             "3. Run the evilmail.php from the browser\n"
@@ -379,11 +381,11 @@ if __name__ == "__main__":
             "-----------------------------------------------------\n"
         )
 
-        from_ = input("From:")
-        to = input("To: ")
-        title = input("Title: ")
-        message = input("Message: ")
-        generate_php(from_, to, title, message)
+        FROM = input("From:")
+        TO = input("To: ")
+        TITLE = input("Title: ")
+        MESSAGE = input("Message: ")
+        generate_php(FROM, TO, TITLE, MESSAGE)
 
     else:
         print(
