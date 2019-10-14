@@ -6,8 +6,6 @@
 # License: GNU v3                         ***
 # *******************************************
 
-# pylint: disable=locally-disabled, no-member, assignment-from-none
-
 import json
 import re
 from typing import Dict, Generator, List, Optional
@@ -63,7 +61,7 @@ def check_wordpress(email: str) -> None:
         BROWSER.submit()
 
         html: bytes = BROWSER.response().read()
-        soup = bs4.Beautifulsoup(html, "html.parser")
+        soup = bs4.BeautifulSoup(html, "html.parser")
         error_divs: List[bs4.Tag] = soup.find_all("div", {"id": "login_error"})
         text_of_divs: str = "".join([element.text for element in error_divs])
         if "incorrect" in text_of_divs:
@@ -81,7 +79,7 @@ def check_pastebin(email: str) -> None:
     URL = f"http://pastebin.com/search?q={email.replace(' ', '+')}"
     print(f"|--[INFO][PASTEBIN][SEARCH][>] {URL} ...")
     html: bytes = BROWSER.open(URL).read()
-    soup = bs4.Beautifulsoup(html, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
     for div in soup.find_all("div", {"class", "gsc-thumbnail-inside"}):
         print(f"|--[INFO][PASTEBIN][URL][>]{div}")
 
@@ -138,7 +136,7 @@ def check_account_twitter(email: str) -> None:
     URL = f"https://twitter.com/{username}"
     try:
         html: str = requests.get(URL).text
-        soup = bs4.Beautifulsoup(html, "html.parser")
+        soup = bs4.BeautifulSoup(html, "html.parser")
         for element in soup.find_all("h1"):
             text: str = element.text
             if "Sorry" in text or "Lo sentimos," in text:
@@ -166,7 +164,7 @@ def check_netflix(email: str) -> None:
         BROWSER.submit()
 
         html: bytes = BROWSER.response().read()
-        soup = bs4.Beautifulsoup(html, "html.parser")
+        soup = bs4.BeautifulSoup(html, "html.parser")
         div: Optional[bs4.Tag] = soup.find("div", {"class": "ui-message-contents"})
         if div and "ninguna" in div.text:
             print("|--[INFO][NETFLIX][ES][CHECK][>] Account doesn't exist...")
@@ -192,7 +190,7 @@ def check_amazon(email: str) -> None:
 
     html: bytes = BROWSER.response().read()
 
-    soup = bs4.Beautifulsoup(html, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
     div: Optional[bs4.Tag] = soup.find("div", {"class": "a-alert-content"})
 
     if div and "ya existe una cuenta" in div.text:
@@ -206,7 +204,7 @@ def check_amazon(email: str) -> None:
 def check_haveibeenpwned(email: str) -> None:
     URL = f"https://haveibeenpwned.com/account/{email}"
     html: mechanize.response_seek_wrapper = BROWSER.open(URL)
-    soup = bs4.Beautifulsoup(html, "html.parser")
+    soup = bs4.BeautifulSoup(html, "html.parser")
     if soup.find(
         "div",
         {"class": "pwnedSearchResult pwnTypeDefinition pwnedWebsite panel-collapse in"},
@@ -330,7 +328,7 @@ def attack(email: str) -> None:
     check_duckduckgo_smart_info(email)
 
 
-banner = """
+BANNER = """
 ███████╗ ██████╗       ██████╗ ██╗██████╗ ██████╗ ███████╗██████╗    ██████╗ ██╗   ██╗
 ██╔════╝██╔═══██╗      ██╔══██╗██║██╔══██╗██╔══██╗██╔════╝██╔══██╗   ██╔══██╗╚██╗ ██╔╝
 █████╗  ██║   ██║█████╗██████╔╝██║██████╔╝██████╔╝█████╗  ██████╔╝   ██████╔╝ ╚████╔╝
@@ -355,7 +353,7 @@ Date latest version: 30/08/2019 | Version: 1.3.0
 """
 
 if __name__ == "__main__":
-    print(banner)
+    print(BANNER)
     choice: int = menu()
     if choice == 1:
         print("[INFO][Emails list][>] By default 'emails.txt'...")
@@ -365,8 +363,8 @@ if __name__ == "__main__":
                 attack(email.replace("\n", ""))
 
     elif choice == 2:
-        email = input("Email: ")
-        attack(email)
+        EMAIL = input("Email: ")
+        attack(EMAIL)
 
     elif choice == 3:
         print(
