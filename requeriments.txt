@@ -4,6 +4,6 @@ mechanize
 
 cssselect
 
-validate_email
+py3-validate-email
 
-pyDNS
+py3DNS
