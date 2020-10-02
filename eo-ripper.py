@@ -52,10 +52,13 @@ def check_wordpress(email):
 def check_pastebin(email):
 	url = "http://pastebin.com/search?q=" + email.replace(" ", "+")
 	print("|--[INFO][PASTEBIN][SEARCH][>] " + url + "...")
-	html = br.open(url).read()
-	soup = BeautifulSoup(html, "html.parser")
-	for div in soup.findAll("div", {"class", "gsc-thumbnail-inside"}):
-		print("|--[INFO][PASTEBIN][URL][>]" + str(div))
+	try:
+		html = br.open(url).read()
+		soup = BeautifulSoup(html, "html.parser")
+		for div in soup.findAll("div", {"class", "gsc-thumbnail-inside"}):
+			print("|--[INFO][PASTEBIN][URL][>]" + str(div))
+	except urllib.error.HTTPError:
+		print(C.colores.alert + "|--[404 HTTP RESPONSE][check_pastebin][>] 404 HTTP Pastebin error..." + C.colores.normal)
 
 def check_AccountTwitter(email):
 	username = get_usernameEmail(email)
